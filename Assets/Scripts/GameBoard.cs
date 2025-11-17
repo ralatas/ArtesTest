@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -33,24 +34,47 @@ public class GameBoard
         width = _Width;
         allGems = new SC_Gem[width, height];
     }
+
+    private GlobalEnums.GemType GetMatchType(SC_Gem gem)
+    {
+        // На всякий случай: если baseType не задан, используем type
+        return gem.baseType != 0 ? gem.baseType : gem.type;
+    }
+
+    // Добавляем проверку на null для RefillBoard 
     public bool MatchesAt(Vector2Int _PositionToCheck, SC_Gem _GemToCheck)
     {
+        // Проверка по горизонтали (два слева)
         if (_PositionToCheck.x > 1)
         {
-            if (allGems[_PositionToCheck.x - 1, _PositionToCheck.y].type == _GemToCheck.type &&
-                allGems[_PositionToCheck.x - 2, _PositionToCheck.y].type == _GemToCheck.type)
+            SC_Gem left1 = allGems[_PositionToCheck.x - 1, _PositionToCheck.y];
+            SC_Gem left2 = allGems[_PositionToCheck.x - 2, _PositionToCheck.y];
+
+            if (left1 != null && left2 != null &&
+                left1.type == _GemToCheck.type &&
+                left2.type == _GemToCheck.type)
+            {
                 return true;
+            }
         }
 
+        // Проверка по вертикали (два снизу)
         if (_PositionToCheck.y > 1)
         {
-            if (allGems[_PositionToCheck.x, _PositionToCheck.y - 1].type == _GemToCheck.type &&
-                allGems[_PositionToCheck.x, _PositionToCheck.y - 2].type == _GemToCheck.type)
+            SC_Gem below1 = allGems[_PositionToCheck.x, _PositionToCheck.y - 1];
+            SC_Gem below2 = allGems[_PositionToCheck.x, _PositionToCheck.y - 2];
+
+            if (below1 != null && below2 != null &&
+                below1.type == _GemToCheck.type &&
+                below2.type == _GemToCheck.type)
+            {
                 return true;
+            }
         }
 
         return false;
     }
+
 
     public void SetGem(int _X, int _Y, SC_Gem _Gem)
     {
@@ -79,7 +103,8 @@ public class GameBoard
                         if (leftGem != null && rightGem != null)
                         {
                             //Match
-                            if (leftGem.type == currentGem.type && rightGem.type == currentGem.type)
+                            if (GetMatchType(leftGem) == GetMatchType(currentGem) && 
+                                GetMatchType(rightGem) == GetMatchType(currentGem))
                             {
                                 currentGem.isMatch = true;
                                 leftGem.isMatch = true;
@@ -99,7 +124,8 @@ public class GameBoard
                         if (aboveGem != null && bellowGem != null)
                         {
                             //Match
-                            if (aboveGem.type == currentGem.type && bellowGem.type == currentGem.type)
+                            if (GetMatchType(aboveGem) == GetMatchType(currentGem) &&
+                                GetMatchType(bellowGem) == GetMatchType(currentGem))
                             {
                                 currentGem.isMatch = true;
                                 aboveGem.isMatch = true;
@@ -116,9 +142,8 @@ public class GameBoard
         if (currentMatches.Count > 0)
             currentMatches = currentMatches.Distinct().ToList();
 
-        CheckForBombs();
     }
-
+    [Obsolete("CheckForBombs is deprecated, please dont use it.")]
     public void CheckForBombs()
     {
         for (int i = 0; i < currentMatches.Count; i++)

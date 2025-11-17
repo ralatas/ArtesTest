@@ -7,6 +7,15 @@ public class SC_Gem : MonoBehaviour
     [HideInInspector]
     public Vector2Int posIndex;
 
+    [HideInInspector]
+    public SC_Gem prefabReference;
+
+    [HideInInspector]
+    public GlobalEnums.GemType baseType; // “цвет группы”, по которому идут матчи (для обычных: совпадает с type).
+
+    [HideInInspector]
+    public bool isBomb = false;
+
     private Vector2 firstTouchPosition;
     private Vector2 finalTouchPosition;
     private bool mousePressed;
@@ -89,7 +98,7 @@ public class SC_Gem : MonoBehaviour
             otherGem.posIndex.y++;
             posIndex.y--;
         }
-        else if (swipeAngle > 135 || swipeAngle < -135 && posIndex.x > 0)
+        else if ((swipeAngle > 135 || swipeAngle < -135) && posIndex.x > 0) //Иначе при swipeAngle > 135 и posIndex.x == 0 он всё равно входит в if и обращается к GetGem(-1, y).
         {
             otherGem = scGameLogic.GetGem(posIndex.x - 1, posIndex.y);
             otherGem.posIndex.x++;
@@ -98,6 +107,9 @@ public class SC_Gem : MonoBehaviour
 
         scGameLogic.SetGem(posIndex.x,posIndex.y, this);
         scGameLogic.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
+
+        //Запоминаем последний swap (для создания бомбы)
+        scGameLogic.RegisterSwap(this, otherGem);
 
         StartCoroutine(CheckMoveCo());
     }
