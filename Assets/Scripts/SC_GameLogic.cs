@@ -13,10 +13,12 @@ public class SC_GameLogic : MonoBehaviour
     public GlobalEnums.GameState CurrentState { get { return currentState; } }
     private SC_Gem lastMovedGemA;
     private SC_Gem lastMovedGemB;
-
+    private IBombService bombService;
+    private const string BombInnerSpriteName = "BombInnerSprite";
     #region MonoBehaviour
     private void Awake()
     {
+        bombService = new BombService();
         Init();
     }
 
@@ -93,12 +95,37 @@ public class SC_GameLogic : MonoBehaviour
             gemInstance.SetupGem(this, _Position);
         }
 
-        // Обычный гем по умолчанию — не бомба
-        gemInstance.isBomb = false;
+        // Reset bomb state
+        gemInstance.isBomb   = false;
         gemInstance.baseType = gemInstance.type;
+
+        // 🔹 Reset main visual from prefab (in case this was a bomb before)
+        var gemSR    = gemInstance.GetComponent<SpriteRenderer>();
+        SpriteRenderer prefabSR = null;
+        if (gemInstance.prefabReference != null)
+            prefabSR = gemInstance.prefabReference.GetComponent<SpriteRenderer>();
+
+        if (gemSR != null && prefabSR != null)
+        {
+            gemSR.sprite = prefabSR.sprite;
+            gemSR.color  = prefabSR.color;
+        }
+
+        // 🔹 Hide/remove inner bomb sprite if it exists
+        Transform innerTransform = gemInstance.transform.Find(BombInnerSpriteName);
+        if (innerTransform != null)
+        {
+            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
+            if (innerSR != null)
+            {
+                innerSR.sprite  = null;
+                innerSR.enabled = false;
+            }
+        }
 
         gameBoard.SetGem(_Position.x, _Position.y, gemInstance);
     }
+
     public void RegisterSwap(SC_Gem first, SC_Gem second)
     {
         lastMovedGemA = first;
@@ -126,82 +153,25 @@ public class SC_GameLogic : MonoBehaviour
         if (matches.Count == 0)
             yield break;
 
-        // 🔹 Шаг 1. Создаём бомбу, если был матч 4+ от последнего хода
-        TryCreateBombFromLastMove(matches);
+        // 1) Let BombService know about this match (bombs inside or adjacent)
+        bombService.RegisterMatch(matches, gameBoard);
 
-        // Обновляем список после возможного удаления кандидата-бомбы
-        List<SC_Gem> bombsToExplode = new List<SC_Gem>();
-        foreach (SC_Gem g in matches)
-        {
-            if (g != null && g.isBomb && g.isMatch)
-                bombsToExplode.Add(g);
-        }
+        // 2) Create a bomb from a 4+ match based on the last user move
+        TryCreateBombInMatches(matches);
 
-        // 🔹 Случай без бомб: обычное уничтожение и каскад
-        if (bombsToExplode.Count == 0)
-        {
-            foreach (SC_Gem gem in matches)
-            {
-                if (gem != null && gem.isMatch)
-                {
-                    ScoreCheck(gem);
-                    DestroyMatchedGemsAt(gem.posIndex);
-                }
-            }
-
-            yield return new WaitForSeconds(0.2f);
-            StartCoroutine(DecreaseRowCo());
-            yield break;
-        }
-
-        // 🔹 Случай с бомбами: сначала соседи, потом сами бомбы
-
-        // Собираем всех, кого нужно уничтожить как "соседей" — это:
-        // - все обычные матч-гемы
-        // - соседние к бомбам в радиусе blastSize
-        HashSet<SC_Gem> neighborGroup = new HashSet<SC_Gem>();
-
+        // 3) Destroy only regular matched gems (bombs are preserved for delayed explosion)
         foreach (SC_Gem gem in matches)
         {
             if (gem != null && gem.isMatch && !gem.isBomb)
-                neighborGroup.Add(gem);
-        }
-
-        foreach (SC_Gem bomb in bombsToExplode)
-        {
-            List<SC_Gem> neighbors = GetBombNeighbors(bomb);
-            foreach (SC_Gem n in neighbors)
-            {
-                if (n != null && n != bomb)
-                    neighborGroup.Add(n);
-            }
-        }
-
-        // Фаза 1: ждём задержку и уничтожаем соседей
-        yield return new WaitForSeconds(SC_GameVariables.Instance.bombNeighborDelay);
-
-        foreach (SC_Gem gem in neighborGroup)
-        {
-            if (gem != null)
             {
                 ScoreCheck(gem);
                 DestroyMatchedGemsAt(gem.posIndex);
             }
         }
 
-        // Фаза 2: ждём задержку и уничтожаем сами бомбы
-        yield return new WaitForSeconds(SC_GameVariables.Instance.bombDestroyDelay);
+        yield return new WaitForSeconds(0.2f);
 
-        foreach (SC_Gem bomb in bombsToExplode)
-        {
-            if (bomb != null)
-            {
-                ScoreCheck(bomb);
-                DestroyMatchedGemsAt(bomb.posIndex);
-            }
-        }
-
-        // Только после уничтожения бомб запускаем каскад
+        // 4) Trigger normal cascading and refill. Bombs will explode later.
         StartCoroutine(DecreaseRowCo());
     }
 
@@ -241,7 +211,57 @@ public class SC_GameLogic : MonoBehaviour
 
         StartCoroutine(FilledBoardCo());
     }
+    private IEnumerator HandleBombExplosionsAfterCascade()
+    {
+        // 1) Wait 1 second AFTER all cascades and refills
+        yield return new WaitForSeconds(1.0f);
 
+        var bombsToExplode = bombService.ConsumePendingBombs();
+        if (bombsToExplode == null || bombsToExplode.Count == 0)
+        {
+            // No bombs actually pending – just return control to player
+            currentState = GlobalEnums.GameState.move;
+            yield break;
+        }
+
+        // 2) Collect all neighbors to destroy (once), so we do not double-hit same gem
+        var neighborsToDestroy = new HashSet<SC_Gem>();
+
+        foreach (var bomb in bombsToExplode)
+        {
+            if (bomb == null)
+                continue;
+
+            foreach (var target in bombService.GetExplosionTargets(bomb, gameBoard))
+            {
+                if (target != null && target != bomb)
+                    neighborsToDestroy.Add(target);
+            }
+        }
+
+        // 3) Destroy neighbors first
+        foreach (var gem in neighborsToDestroy)
+        {
+            if (gem != null)
+            {
+                ScoreCheck(gem);
+                DestroyMatchedGemsAt(gem.posIndex);
+            }
+        }
+
+        // 4) Destroy bombs themselves
+        foreach (var bomb in bombsToExplode)
+        {
+            if (bomb != null)
+            {
+                ScoreCheck(bomb);
+                DestroyMatchedGemsAt(bomb.posIndex);
+            }
+        }
+
+        // 5) Launch standard cascade after explosions
+        StartCoroutine(DecreaseRowCo());
+    }
 
     public void ScoreCheck(SC_Gem gemToCheck)
     {
@@ -285,8 +305,17 @@ public class SC_GameLogic : MonoBehaviour
         }
         else
         {
-            yield return new WaitForSeconds(0.5f);
-            currentState = GlobalEnums.GameState.move;
+            // No more matches. Check if there are any bombs waiting to explode.
+            if (bombService != null && bombService.HasPendingBombs)
+            {
+                // handle bombs: wait 1 second, then explode them
+                yield return StartCoroutine(HandleBombExplosionsAfterCascade());
+            }
+            else
+            {
+                yield return new WaitForSeconds(0.5f);
+                currentState = GlobalEnums.GameState.move;
+            }
         }
     }
 
@@ -401,101 +430,99 @@ public class SC_GameLogic : MonoBehaviour
         gem.destroyEffect = bombTemplate.destroyEffect;
         gem.scoreValue = bombTemplate.scoreValue;
 
-        // Цветовая группа сохраняется
-        // gem.baseType уже = цвету матча
-        // при желании можно ещё поменять визуал
         var bombSR = bombTemplate.GetComponent<SpriteRenderer>();
-        var gemSR = gem.GetComponent<SpriteRenderer>();
-        if (bombSR != null && gemSR != null)
+        var gemSR  = gem.GetComponent<SpriteRenderer>();
+        if (gemSR == null || bombSR == null)
         {
-            gemSR.sprite = bombSR.sprite;
+            // Fallback: just mark as bomb without visual if something is missing
+            gem.isMatch = false;
+            return;
         }
 
-        // Сбросим флаг матчей на этом ходу
+        // 1) Remember original sprite (color/type that formed this bomb)
+        Sprite originalSprite = gemSR.sprite;
+
+        // 2) Set bomb base sprite
+        gemSR.sprite = bombSR.sprite;
+
+        // 3) Setup / create inner sprite for original gem icon
+        Transform innerTransform = gem.transform.Find(BombInnerSpriteName);
+        SpriteRenderer innerSR;
+
+        if (innerTransform == null)
+        {
+            GameObject innerObj = new GameObject(BombInnerSpriteName);
+            innerObj.transform.SetParent(gem.transform);
+            innerObj.transform.localPosition = Vector3.zero;
+            innerObj.transform.localRotation = Quaternion.identity;
+            innerObj.transform.localScale = Vector3.one * 0.6f; // slightly smaller than bomb
+
+            innerSR = innerObj.AddComponent<SpriteRenderer>();
+        }
+        else
+        {
+            innerSR = innerTransform.GetComponent<SpriteRenderer>();
+            if (innerSR == null)
+                innerSR = innerTransform.gameObject.AddComponent<SpriteRenderer>();
+
+            innerTransform.localPosition = Vector3.zero;
+            innerTransform.localRotation = Quaternion.identity;
+            innerTransform.localScale = Vector3.one * 0.6f;
+        }
+
+        innerSR.sprite = originalSprite;
+        innerSR.sortingLayerID = gemSR.sortingLayerID;
+        innerSR.sortingOrder   = gemSR.sortingOrder + 1; // draw above bomb base
+        innerSR.enabled        = true;
+
+        // Keep baseType as match color; just clear match flag for this turn
         gem.isMatch = false;
     }
-    private void TryCreateBombFromLastMove(List<SC_Gem> currentMatches)
-    {
-        SC_Gem candidate = FindBombCandidate(lastMovedGemA, currentMatches);
-        if (candidate == null)
-            candidate = FindBombCandidate(lastMovedGemB, currentMatches);
 
-        if (candidate == null)
+    /// <summary>
+    /// Creates exactly one bomb from the current matches
+    /// if there is any connected group of 4+ gems of the same baseType.
+    /// Works for both user-initiated matches and cascade/refill matches.
+    /// </summary>
+    private void TryCreateBombInMatches(List<SC_Gem> currentMatches)
+    {
+        if (currentMatches == null || currentMatches.Count == 0)
             return;
 
-        MakeGemBomb(candidate);
+        // We use this set to not re-process the same gems
+        HashSet<SC_Gem> visited = new HashSet<SC_Gem>();
 
-        // Убираем из списка уничтожаемых
-        currentMatches.Remove(candidate);
-        gameBoard.CurrentMatches.Remove(candidate);
-    }
-
-    private SC_Gem FindBombCandidate(SC_Gem gem, List<SC_Gem> currentMatches)
-    {
-        if (gem == null) return null;
-        if (!gem.isMatch) return null;
-        if (gem.isBomb) return null; // уже бомба
-
-        // Берём связную группу матча вокруг этой фишки
-        List<SC_Gem> group = GetConnectedMatchGroupFrom(gem);
-        if (group.Count >= 4)
+        foreach (SC_Gem gem in currentMatches)
         {
-            return gem;
-        }
-
-        return null;
-    }
-    private List<SC_Gem> GetBombNeighbors(SC_Gem bomb)
-    {
-        List<SC_Gem> result = new List<SC_Gem>();
-        if (bomb == null) return result;
-
-        Vector2Int center = bomb.posIndex;
-
-        // 1) Все ближайшие соседи (8 направлений вокруг бомбы)
-        for (int dx = -1; dx <= 1; dx++)
-        {
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                if (dx == 0 && dy == 0)
-                    continue; // пропускаем саму бомбу
-
-                int nx = center.x + dx;
-                int ny = center.y + dy;
-
-                if (nx < 0 || nx >= gameBoard.Width || ny < 0 || ny >= gameBoard.Height)
-                    continue;
-
-                SC_Gem g = gameBoard.GetGem(nx, ny);
-                if (g != null && !result.Contains(g))
-                    result.Add(g);
-            }
-        }
-
-        // 2) Элементы "через одну" по прямым (крест на 2 клетки)
-        // слева и справа
-        int[,] offsets2 =
-        {
-            { -2,  0 },
-            {  2,  0 },
-            {  0, -2 },
-            {  0,  2 }
-        };
-
-        for (int i = 0; i < offsets2.GetLength(0); i++)
-        {
-            int nx = center.x + offsets2[i, 0];
-            int ny = center.y + offsets2[i, 1];
-
-            if (nx < 0 || nx >= gameBoard.Width || ny < 0 || ny >= gameBoard.Height)
+            if (gem == null || visited.Contains(gem))
                 continue;
 
-            SC_Gem g = gameBoard.GetGem(nx, ny);
-            if (g != null && !result.Contains(g))
-                result.Add(g);
-        }
+            // Take a connected group starting from this gem
+            List<SC_Gem> group = GetConnectedMatchGroupFrom(gem);
+            foreach (var g in group)
+                visited.Add(g);
 
-        return result;
+            // We only care about groups of size >= 4
+            if (group.Count >= 4)
+            {
+                // Choose any gem from this group to become a bomb.
+                // You can change this selection strategy if needed
+                SC_Gem candidate = group[0];
+
+                // Skip if it is already a bomb
+                if (candidate.isBomb)
+                    continue;
+
+                MakeGemBomb(candidate);
+
+                // This gem should not be destroyed as part of normal match resolution
+                currentMatches.Remove(candidate);
+                gameBoard.CurrentMatches.Remove(candidate);
+
+                // Only one bomb per resolve step
+                return;
+            }
+        }
     }
 
     #endregion
