@@ -37,14 +37,14 @@ public class GameBoard
 
     private GlobalEnums.GemType GetMatchType(SC_Gem gem)
     {
-        // На всякий случай: если baseType не задан, используем type
+        // Fallback: if baseType is not set, use type
         return gem.baseType != 0 ? gem.baseType : gem.type;
     }
 
-    // Добавляем проверку на null для RefillBoard 
+    // Adding a null check for RefillBoard
     public bool MatchesAt(Vector2Int _PositionToCheck, SC_Gem _GemToCheck)
     {
-        // Проверка по горизонтали (два слева)
+        // Check horizontally (two left)
         if (_PositionToCheck.x > 1)
         {
             SC_Gem left1 = allGems[_PositionToCheck.x - 1, _PositionToCheck.y];
@@ -58,7 +58,7 @@ public class GameBoard
             }
         }
 
-        // Проверка по вертикали (два снизу)
+        // Check vertically (two below)
         if (_PositionToCheck.y > 1)
         {
             SC_Gem below1 = allGems[_PositionToCheck.x, _PositionToCheck.y - 1];
@@ -142,40 +142,6 @@ public class GameBoard
         if (currentMatches.Count > 0)
             currentMatches = currentMatches.Distinct().ToList();
 
-    }
-    [Obsolete("CheckForBombs is deprecated, please dont use it.")]
-    public void CheckForBombs()
-    {
-        for (int i = 0; i < currentMatches.Count; i++)
-        {
-            SC_Gem gem = currentMatches[i];
-            int x = gem.posIndex.x;
-            int y = gem.posIndex.y;
-
-            if (gem.posIndex.x > 0)
-            {
-                if (allGems[x - 1, y] != null && allGems[x - 1, y].type == GlobalEnums.GemType.bomb)
-                    MarkBombArea(new Vector2Int(x - 1, y), allGems[x - 1, y].blastSize);
-            }
-
-            if (gem.posIndex.x + 1 < width)
-            {
-                if (allGems[x + 1, y] != null && allGems[x + 1, y].type == GlobalEnums.GemType.bomb)
-                    MarkBombArea(new Vector2Int(x + 1, y), allGems[x + 1, y].blastSize);
-            }
-
-            if (gem.posIndex.y > 0)
-            {
-                if (allGems[x, y - 1] != null && allGems[x, y - 1].type == GlobalEnums.GemType.bomb)
-                    MarkBombArea(new Vector2Int(x, y - 1), allGems[x, y - 1].blastSize);
-            }
-
-            if (gem.posIndex.y + 1 < height)
-            {
-                if (allGems[x, y + 1] != null && allGems[x, y + 1].type == GlobalEnums.GemType.bomb)
-                    MarkBombArea(new Vector2Int(x, y + 1), allGems[x, y + 1].blastSize);
-            }
-        }
     }
 
     public void MarkBombArea(Vector2Int bombPos, int _BlastSize)

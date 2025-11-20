@@ -1,98 +1,109 @@
-# Match-3 Technical Test — Feature Implementation Summary
+# Match-3 Technical Test — Refactored Architecture Overview
 
-This document summarizes all features implemented according to the assignment requirements, including architectural decisions and minimal-impact changes to the original project.
-
----
-
-## ✅ Task 1 — Cascading Logic & Prevention of Accidental Matches
-
-### ✔ Preventing accidental matches during refill
-An anti-match check was added to the refill logic: newly spawned gems no longer create instant matches unless unavoidable.
-
-### ✔ Per-gem cascading behavior
-`DecreaseRowCo` was reworked:
-- gems fall **one-by-one** instead of dropping as a whole column;
-- added `cascadeStepDelay` for natural timing;
-- consistent top-to-bottom cascading per column.
-
-### ✔ Swipe-left bug fixed
-Corrected a boundary condition that caused out-of-range array access on left swipes.
+This document describes the refactored architecture and the implemented features of the Match‑3 technical test.  
+The goal was not only to meet the assignment requirements, but also to reorganize the project into a cleaner, more maintainable structure that feels closer to real production code.
 
 ---
 
-## ✅ Task 2 — Gem Object Pooling System
-A standalone `SC_GemPool` component was implemented.
+## 🎯 High‑Level Summary
 
-### ✔ Replaced Instantiate/Destroy with pooling
-All gems are now spawned via `Get` and returned via `Release`, reducing allocations and eliminating runtime stutters.
+The original monolithic logic has been restructured into a **service‑based architecture**, where each gameplay responsibility is isolated into its own component.  
+This makes the project easier to understand, modify, and extend in the future.
 
-### ✔ Supports multiple gem types
-Each gem prefab has its own queue inside the pool.
+New services introduced:
 
-### ✔ Minimal code changes
-Only two methods were updated:
-- `SpawnGem`
-- `DestroyMatchedGemsAt`
+- **InputService** — handles swipe detection, move validation, and swap logic  
+- **BoardRefillService** — cascades, gravity, refill, staggered spawning  
+- **ScoreService** — unified scoring API  
+- **MatchResolver** — match resolution, bomb creation, destruction workflow  
+- **BombService** — bomb queueing, explosion rules, delayed detonations  
 
-All other gameplay logic remains intact.
-
----
-
-## ✅ Task 3 — Bomb Special Piece
-
-### ✔ Bomb creation strictly from 4+ matches
-The system tracks the player's last swap and creates a bomb **only** if a 4+ connected match originates from that move.
-
-### ✔ Color grouping via `baseType`
-Bombs inherit the match color, allowing correct match behavior with gems of the same color group.
-
-### ✔ Match logic updated for special pieces
-Matching is now based on `baseType`, enabling:
-- bomb + regular gems of same color,
-- bomb + bomb combinations.
-
-### ✔ Explosion pattern implemented exactly as required
-Bombs destroy:
-- all 8 neighboring tiles (orthogonal + diagonal), and
-- cross-shaped positions at distance 2 (x±2, y) and (x, y±2).
-
-### ✔ Correct explosion sequence
-1. Destroy neighbors (`bombNeighborDelay`)
-2. Destroy the bomb itself (`bombDestroyDelay`)
-3. **Only then** trigger cascading/refill
-
-The old `CheckForBombs` and `MarkBombArea` system was removed.
+Each service has a clear responsibility, significantly improving the readability and SOLID compliance of the project.
 
 ---
 
-## ✅ Task 5 — Staggered Gem Drop Animation
+## 🧩 Implemented Features (from assignment requirements)
 
-### ✔ Cascading existing gems with stagger
-Using `cascadeStepDelay`, gems fall individually with smooth timing.
+### ✔ Cascading Logic  
+Gems fall individually with natural timing using `cascadeStepDelay`.  
+The falling mechanic now looks smooth and predictable.
 
-### ✔ Staggered spawn of new gems
-Implemented `RefillBoardCo`:
-- new gems spawn one-by-one,
-- controlled by `spawnStaggerDelay`,
-- resulting in a polished chain-like drop effect similar to Royal Match.
+### ✔ Prevention of Accidental Matches  
+Refill logic ensures that newly spawned gems do **not** create instant matches unless absolutely unavoidable.
+
+### ✔ Object Pooling  
+A dedicated `SC_GemPool` replaces Instantiate/Destroy during gameplay.  
+Supports multiple gem prefabs and eliminates allocation spikes during cascades.
+
+### ✔ Bomb Piece  
+- Bombs are created **only** from matches of 4 or more gems  
+- Bombs inherit the correct color (`baseType`)  
+- Explosion affects:  
+  - all 8 neighbors (orthogonal + diagonal)  
+  - cross cells at distance 2  
+- Explosion sequence follows the required timing:
+  1. Destroy neighbors  
+  2. Destroy bomb  
+  3. Trigger cascade
+
+### ✔ Staggered Gem Refill  
+New gems spawn with a stagger using `spawnStaggerDelay`, creating a clean chain‑drop animation similar to commercial Match‑3 games.
+
+---
+
+## 🏗 Architecture Overview
+
+### **SC_GameLogic (Coordinator)**
+No longer contains gameplay logic.  
+Now acts as a centralized organizer that initializes services and routes key events.
+
+### **InputService**
+Extracted from `SC_Gem`, now responsible for:
+- detecting swipe direction  
+- selecting neighboring gem  
+- performing swap  
+- validating moves  
+- rolling back invalid swaps  
+
+`SC_Gem` became a simple visual/state object with no gameplay logic inside.
+
+### **MatchResolver**
+Handles:
+- match resolution  
+- bomb creation  
+- delegating explosion logic to BombService  
+- coordinating post-destruction cascades
+
+### **BombService**
+Responsible for:
+- collecting bombs during match resolution  
+- applying the correct explosion pattern  
+- executing delayed chain‑explosions
+
+### **BoardRefillService**
+Handles the entire board update cycle:
+- gravity  
+- cascade  
+- refill  
+- anti‑match spawn logic  
+- cleanup of misplaced gem objects
+
+### **ScoreService**
+Provides a single place for all scoring updates, simplifying future expansion (combo chains, multipliers, streak bonuses).
 
 ---
 
 ## 🧹 Additional Improvements
-- Null-safe `MatchesAt` implementation
-- Minor cleanup without altering core architecture
-- Removed obsolete or risky logic
+- Added null‑safe match detection  
+- Removed or replaced legacy code paths  
+- Unified gem spawning through a single API  
+- Cleaned up cascade logic for readability and predictability  
+- Prepared the project for further extensibility
 
 ---
 
-## 🎯 Final Result
-All requirements of the technical test have been fully implemented:
-- cascading mechanics,
-- anti-accidental-match system,
-- object pooling,
-- complete bomb mechanics (creation, matching, explosion sequence),
-- staggered drop animations.
+## ✅ Final Result
 
-The project now behaves more professionally, remains easy to extend, and feels smooth and responsive during gameplay.
+The project now behaves smoothly and predictably, meets all assignment requirements, and uses a clean, modular architecture.  
+This refactored version is easier to work with, easier to debug, and far more suitable for real production feature development.
 
-Ready for submission.

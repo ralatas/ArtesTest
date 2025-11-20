@@ -7,12 +7,14 @@ public class MatchResolver
     private readonly SC_GameLogic gameLogic;
     private readonly GameBoard gameBoard;
     private readonly IBombService bombService;
+    private readonly IScoreService scoreService;
 
-    public MatchResolver(SC_GameLogic gameLogic, GameBoard gameBoard, IBombService bombService)
+    public MatchResolver(SC_GameLogic gameLogic, GameBoard gameBoard, IBombService bombService, IScoreService scoreService)
     {
         this.gameLogic = gameLogic;
         this.gameBoard = gameBoard;
         this.bombService = bombService;
+        this.scoreService = scoreService;
     }
 
     /// <summary>
@@ -110,7 +112,15 @@ public class MatchResolver
 
     private void ScoreCheck(SC_Gem gemToCheck)
     {
-        gameBoard.Score += gemToCheck.scoreValue;
+        if (scoreService != null)
+        {
+            scoreService.AddGemScore(gemToCheck);
+        }
+        else if (gemToCheck != null)
+        {
+            // Fallback in case scoreService is not provided
+            gameBoard.Score += gemToCheck.scoreValue;
+        }
     }
 
     private void DestroyMatchedGemsAt(Vector2Int pos)
@@ -234,8 +244,8 @@ public class MatchResolver
 
         innerSR.sprite = originalSprite;
         innerSR.sortingLayerID = gemSR.sortingLayerID;
-        innerSR.sortingOrder   = gemSR.sortingOrder + 1; // draw above bomb base
-        innerSR.enabled        = true;
+        innerSR.sortingOrder = gemSR.sortingOrder + 1; // draw above bomb base
+        innerSR.enabled = true;
 
         // Keep baseType as match color; just clear match flag for this turn
         gem.isMatch = false;

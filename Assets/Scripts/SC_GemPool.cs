@@ -5,7 +5,7 @@ public class SC_GemPool : MonoBehaviour
 {
     public static SC_GemPool Instance { get; private set; }
 
-    // Ключ — префаб, значение — очередь свободных инстансов этого типа
+    // Key — prefab, value — queue of free instances of this type
     private readonly Dictionary<SC_Gem, Queue<SC_Gem>> pool =
         new Dictionary<SC_Gem, Queue<SC_Gem>>();
 
@@ -18,7 +18,7 @@ public class SC_GemPool : MonoBehaviour
         }
 
         Instance = this;
-        // Можно убрать, если не нужно переносить пул между сценами
+        // Can be removed if persistence across scenes is not needed
         DontDestroyOnLoad(gameObject);
     }
 
@@ -39,7 +39,7 @@ public class SC_GemPool : MonoBehaviour
         }
         else
         {
-            // Первичное создание
+            // Initial creation
             gem = Instantiate(
                 prefab,
                 new Vector3(boardPos.x, boardPos.y + SC_GameVariables.Instance.dropHeight, 0f),
@@ -49,11 +49,11 @@ public class SC_GemPool : MonoBehaviour
             gem.prefabReference = prefab;
         }
 
-        // Если по каким-то причинам prefabReference пуст — обновим
+        // If prefabReference is empty — update it
         if (gem.prefabReference == null)
             gem.prefabReference = prefab;
 
-        // Базовая настройка
+        // Basic setup
         gem.transform.SetParent(parent);
         gem.name = $"Gem - {boardPos.x}, {boardPos.y}";
         gem.posIndex = boardPos;
@@ -91,7 +91,7 @@ public class SC_GemPool : MonoBehaviour
 
         gem.isMatch = false;
 
-        // Можно сбросить позицию куда-нибудь вне поля, чтобы не мешался
+        // Reset position off-board so it doesn't interfere
         gem.transform.position = new Vector3(-10f, -10f, 0f);
 
         gem.gameObject.SetActive(false);
