@@ -33,7 +33,6 @@ public class SC_GameLogic : MonoBehaviour
         IInputService inputService,
         IMatchResolver matchResolver)
     {
-        Debug.Log(1231231);
         this.gameBoard = gameBoard;
         this.bombService = bombService;
         this.scoreService = scoreService;
