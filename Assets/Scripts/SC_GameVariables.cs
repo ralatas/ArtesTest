@@ -12,8 +12,8 @@ public class SC_GameVariables : MonoBehaviour
     public int dropHeight = 0;
     public float gemSpeed;
     public float scoreSpeed = 5;
-    public float cascadeStepDelay = 0.04f; // delay between falls inside cascade (existing gems)
-    public float spawnStaggerDelay = 0.04f; //delay between spawning new gems
+    public float cascadeStepDelay = 0.03f; // delay between falls inside cascade (existing gems)
+    public float spawnStaggerDelay = 0.05f; //delay between spawning new gems
     public float bombNeighborDelay = 0.2f; // delay before destroying neighbors
     public float bombDestroyDelay = 0.2f;  // delay before destroying the bomb itself
     

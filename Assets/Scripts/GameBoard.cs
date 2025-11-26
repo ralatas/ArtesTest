@@ -41,45 +41,38 @@ public class GameBoard
         return gem.baseType != 0 ? gem.baseType : gem.type;
     }
 
-    // Adding a null check for RefillBoard
     public bool MatchesAt(Vector2Int positionToCheck, SC_Gem gemToCheck)
     {
         if (gemToCheck == null)
             return false;
 
-        GlobalEnums.GemType matchTypeToCheck = GetMatchType(gemToCheck);
+        int x = positionToCheck.x;
+        int y = positionToCheck.y;
 
-        // Horizontal (2 left)
-        if (positionToCheck.x > 1)
+        GlobalEnums.GemType matchType = GetMatchType(gemToCheck);
+
+        bool IsSameMatchType(int cx, int cy)
         {
-            SC_Gem left1 = allGems[positionToCheck.x - 1, positionToCheck.y];
-            SC_Gem left2 = allGems[positionToCheck.x - 2, positionToCheck.y];
+            if (cx < 0 || cx >= width || cy < 0 || cy >= height)
+                return false;
 
-            if (left1 != null && left2 != null &&
-                GetMatchType(left1) == matchTypeToCheck &&
-                GetMatchType(left2) == matchTypeToCheck)
-            {
-                return true;
-            }
+            SC_Gem g = allGems[cx, cy];
+            return g != null && GetMatchType(g) == matchType;
         }
 
-        // Check vertically (two below)
-        if (positionToCheck.y > 1)
+        foreach (var offsets in MatchTriplets)
         {
-            SC_Gem below1 = allGems[positionToCheck.x, positionToCheck.y - 1];
-            SC_Gem below2 = allGems[positionToCheck.x, positionToCheck.y - 2];
+            int x1 = x + offsets[0].x;
+            int y1 = y + offsets[0].y;
+            int x2 = x + offsets[1].x;
+            int y2 = y + offsets[1].y;
 
-            if (below1 != null && below2 != null &&
-                GetMatchType(below1) == matchTypeToCheck &&
-                GetMatchType(below2) == matchTypeToCheck)
-            {
+            if (IsSameMatchType(x1, y1) && IsSameMatchType(x2, y2))
                 return true;
-            }
         }
 
         return false;
     }
-
 
     public void SetGem(int _X, int _Y, SC_Gem _Gem)
     {
@@ -169,5 +162,17 @@ public class GameBoard
         }
         currentMatches = currentMatches.Distinct().ToList();
     }
+    public static readonly Vector2Int[][] MatchTriplets = new Vector2Int[][]
+    {
+        // Horizontal triplets
+        new [] { new Vector2Int(-1, 0), new Vector2Int(-2, 0) },
+        new [] { new Vector2Int(-1, 0), new Vector2Int(+1, 0) },
+        new [] { new Vector2Int(+1, 0), new Vector2Int(+2, 0) },
+
+        // Vertical triplets
+        new [] { new Vector2Int(0, -1), new Vector2Int(0, -2) },
+        new [] { new Vector2Int(0, -1), new Vector2Int(0, +1) },
+        new [] { new Vector2Int(0, +1), new Vector2Int(0, +2) },
+    };
 }
 
