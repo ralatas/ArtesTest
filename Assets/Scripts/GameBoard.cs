@@ -42,31 +42,36 @@ public class GameBoard
     }
 
     // Adding a null check for RefillBoard
-    public bool MatchesAt(Vector2Int _PositionToCheck, SC_Gem _GemToCheck)
+    public bool MatchesAt(Vector2Int positionToCheck, SC_Gem gemToCheck)
     {
-        // Check horizontally (two left)
-        if (_PositionToCheck.x > 1)
+        if (gemToCheck == null)
+            return false;
+
+        GlobalEnums.GemType matchTypeToCheck = GetMatchType(gemToCheck);
+
+        // Horizontal (2 left)
+        if (positionToCheck.x > 1)
         {
-            SC_Gem left1 = allGems[_PositionToCheck.x - 1, _PositionToCheck.y];
-            SC_Gem left2 = allGems[_PositionToCheck.x - 2, _PositionToCheck.y];
+            SC_Gem left1 = allGems[positionToCheck.x - 1, positionToCheck.y];
+            SC_Gem left2 = allGems[positionToCheck.x - 2, positionToCheck.y];
 
             if (left1 != null && left2 != null &&
-                left1.type == _GemToCheck.type &&
-                left2.type == _GemToCheck.type)
+                GetMatchType(left1) == matchTypeToCheck &&
+                GetMatchType(left2) == matchTypeToCheck)
             {
                 return true;
             }
         }
 
         // Check vertically (two below)
-        if (_PositionToCheck.y > 1)
+        if (positionToCheck.y > 1)
         {
-            SC_Gem below1 = allGems[_PositionToCheck.x, _PositionToCheck.y - 1];
-            SC_Gem below2 = allGems[_PositionToCheck.x, _PositionToCheck.y - 2];
+            SC_Gem below1 = allGems[positionToCheck.x, positionToCheck.y - 1];
+            SC_Gem below2 = allGems[positionToCheck.x, positionToCheck.y - 2];
 
             if (below1 != null && below2 != null &&
-                below1.type == _GemToCheck.type &&
-                below2.type == _GemToCheck.type)
+                GetMatchType(below1) == matchTypeToCheck &&
+                GetMatchType(below2) == matchTypeToCheck)
             {
                 return true;
             }
