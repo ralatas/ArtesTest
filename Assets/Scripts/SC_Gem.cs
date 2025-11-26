@@ -33,7 +33,7 @@ public class SC_Gem : MonoBehaviour
         // Smooth movement towards logical board position
         if (Vector2.Distance(transform.position, posIndex) > 0.01f)
         {
-            transform.position = Vector2.Lerp(
+            transform.position = Vector2.MoveTowards(
                 transform.position,
                 posIndex,
                 SC_GameVariables.Instance.gemSpeed * Time.deltaTime
