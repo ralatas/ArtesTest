@@ -2,39 +2,49 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using Zenject;
 
 public class SC_GameLogic : MonoBehaviour
 {
     private Dictionary<string, GameObject> unityObjects;
     private float displayScore = 0;
     private GameBoard gameBoard;
+    private IBombService bombService;
+    private IScoreService scoreService;
+    private IBoardRefillService boardRefillService;
+    private IInputService inputService;
+    private IMatchResolver matchResolver;
+
     private GlobalEnums.GameState currentState = GlobalEnums.GameState.move;
     public GlobalEnums.GameState CurrentState { get { return currentState; } }
     private SC_Gem lastMovedGemA;
     private SC_Gem lastMovedGemB;
-    private IBombService bombService;
-    private IScoreService scoreService;
-    private MatchResolver matchResolver;
-    private IBoardRefillService boardRefillService;
 
-    private IInputService inputService;
     public IInputService InputService => inputService;
 
     public const string BombInnerSpriteName = "BombInnerSprite";
 
-    #region MonoBehaviour
-    private void Awake()
+    [Inject]
+    public void Construct(
+        GameBoard gameBoard,
+        IBombService bombService,
+        IScoreService scoreService,
+        IBoardRefillService boardRefillService,
+        IInputService inputService,
+        IMatchResolver matchResolver)
     {
-        bombService = new BombService();
-        Init();
-        scoreService = new ScoreService(gameBoard);
-        boardRefillService = new BoardRefillService(gameBoard, this);
-        inputService = new InputService(this);
-        matchResolver = new MatchResolver(this, gameBoard, bombService, scoreService);
+        this.gameBoard = gameBoard;
+        this.bombService = bombService;
+        this.scoreService = scoreService;
+        this.boardRefillService = boardRefillService;
+        this.inputService = inputService;
+        this.matchResolver = matchResolver;
     }
 
+    #region MonoBehaviour
     private void Start()
     {
+        Init();
         StartGame();
     }
 
@@ -53,8 +63,6 @@ public class SC_GameLogic : MonoBehaviour
         GameObject[] _obj = GameObject.FindGameObjectsWithTag("UnityObject");
         foreach (GameObject g in _obj)
             unityObjects.Add(g.name, g);
-
-        gameBoard = new GameBoard(7, 7);
         Setup();
     }
 

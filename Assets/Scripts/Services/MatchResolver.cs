@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MatchResolver
+public class MatchResolver : IMatchResolver
 {
     private readonly SC_GameLogic gameLogic;
     private readonly GameBoard gameBoard;
