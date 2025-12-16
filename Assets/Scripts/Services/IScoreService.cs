@@ -1,4 +1,5 @@
 /// <summary>
+/// Сервис централизует всю работу со счётом (очки) игры.
 /// Service responsible for managing and updating game score.
 /// Wraps GameBoard.Score so that score-related logic is centralized
 /// and can be easily extended (multipliers, combos, etc.).

@@ -1,4 +1,7 @@
 using UnityEngine;
+/// <summary>
+/// Реализация сервиса счёта: хранит и изменяет GameBoard.Score через единый интерфейс.
+/// </summary>
 
 public class ScoreService : IScoreService
 {
@@ -10,7 +13,9 @@ public class ScoreService : IScoreService
     {
         this.gameBoard = gameBoard;
     }
-
+    /// <summary>
+    /// Сбрасывает счёт в ноль.
+    /// </summary>
     public void ResetScore()
     {
         gameBoard.Score = 0;
@@ -24,6 +29,9 @@ public class ScoreService : IScoreService
         gameBoard.Score += gem.scoreValue;
     }
 
+    /// <summary>
+    /// Добавляет указанное количество очков напрямую.
+    /// </summary>
     public void AddScore(int value)
     {
         gameBoard.Score += value;

@@ -57,6 +57,12 @@ public class SC_GameLogic : MonoBehaviour
     #endregion
 
     #region Logic
+
+    /// <summary>
+    /// Инициализирует/настраивает действие метода.
+    /// Собирает объекты сцены с тегом UnityObject в словарь для быстрого доступа и запускает первичную настройку.
+    /// Параметры: отсутствуют.
+    /// </summary>
     private void Init()
     {
         unityObjects = new Dictionary<string, GameObject>();
@@ -66,6 +72,12 @@ public class SC_GameLogic : MonoBehaviour
         Setup();
     }
 
+    /// <summary>
+    /// Инициализирует/настраивает действие метода.
+    /// Создаёт фоновые тайлы и спавнит стартовые гемы без начальных совпадений.
+    /// Использует MatchesAt как защиту от стартовых матчей при генерации.
+    /// Параметры: отсутствуют.
+    /// </summary>
     private void Setup()
     {
         for (int x = 0; x < gameBoard.Width; x++)
@@ -88,6 +100,11 @@ public class SC_GameLogic : MonoBehaviour
             }
     }
 
+    /// <summary>
+    /// Запускает операцию game.
+    /// Инициализирует UI счёта стартовым значением из ScoreService (если есть) или из GameBoard.
+    /// Параметры: отсутствуют.
+    /// </summary>
     public void StartGame()
     {
         int initialScore = scoreService != null ? scoreService.Score : gameBoard.Score;
@@ -180,13 +197,28 @@ public class SC_GameLogic : MonoBehaviour
         yield return StartCoroutine(boardRefillService.CascadeAndRefillCo());
 
         // After refill, keep original timing before checking for new matches
+        /// <summary>
+        /// Выполняет операцию for seconds.
+        /// Выполняет часть игровой логики данного компонента.
+        /// Параметры: 0.5f.
+        /// </summary>
         yield return new WaitForSeconds(0.5f);
 
         gameBoard.FindAllMatches();
 
         if (gameBoard.CurrentMatches.Count > 0)
         {
+            /// <summary>
+            /// Выполняет операцию for seconds.
+            /// Выполняет часть игровой логики данного компонента.
+            /// Параметры: 0.5f.
+            /// </summary>
             yield return new WaitForSeconds(0.5f);
+          /// <summary>
+          /// Удаляет/освобождает операцию matches.
+          /// Запускает процесс удаления текущих совпадений через MatchResolver (асинхронно, в корутине).
+          /// Параметры: отсутствуют.
+          /// </summary>
             DestroyMatches();
         }
         else
@@ -199,6 +231,11 @@ public class SC_GameLogic : MonoBehaviour
             }
             else
             {
+                /// <summary>
+                /// Выполняет операцию for seconds.
+                /// Выполняет часть игровой логики данного компонента.
+                /// Параметры: 0.5f.
+                /// </summary>
                 yield return new WaitForSeconds(0.5f);
                 currentState = GlobalEnums.GameState.move;
             }

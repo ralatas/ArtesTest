@@ -9,6 +9,10 @@ public class MatchResolver : IMatchResolver
     private readonly IBombService bombService;
     private readonly IScoreService scoreService;
 
+    /// <summary>
+    /// Конструктор резолвера матчей.
+    /// Получает ссылки на GameLogic/Board и сервисы бомб и счёта.
+    /// </summary>
     public MatchResolver(SC_GameLogic gameLogic, GameBoard gameBoard, IBombService bombService, IScoreService scoreService)
     {
         this.gameLogic = gameLogic;
@@ -18,11 +22,11 @@ public class MatchResolver : IMatchResolver
     }
 
     /// <summary>
-    /// Resolves current matches:
-    /// - triggers bombs in BombService (bombs inside or adjacent to matches),
-    /// - creates exactly one bomb from any 4+ connected match,
-    /// - destroys only regular matched gems (bombs are kept for delayed explosion),
-    /// - then starts cascading.
+    /// Разрешает текущие совпадения:
+    /// - активирует бомбы в BombService (бомбы внутри или рядом с совпадениями),
+    /// - создаёт ровно одну бомбу из любого совпадения 4+ гемов,
+    /// - уничтожает только обычные совпавшие гемы (бомбы сохраняются для отложенного взрыва),
+    /// - затем запускает каскадирование.
     /// </summary>
     public IEnumerator DestroyMatchesCo()
     {
@@ -53,10 +57,10 @@ public class MatchResolver : IMatchResolver
     }
 
     /// <summary>
-    /// Handles delayed bomb explosions after all cascades and refills:
-    /// - waits 1 second,
-    /// - explodes all pending bombs (neighbors first, then bombs),
-    /// - starts another cascade afterwards.
+    /// Обрабатывает отложенные взрывы бомб после всех каскадов и пополнений:
+    /// - ждёт 1 секунду,
+    /// - взрывает все ожидающие бомбы (сначала соседей, потом сами бомбы),
+    /// - затем запускает ещё один каскад.
     /// </summary>
     public IEnumerator HandleBombExplosionsAfterCascadeCo()
     {
@@ -110,6 +114,9 @@ public class MatchResolver : IMatchResolver
         gameLogic.StartCascade();
     }
 
+    /// <summary>
+    /// Начисляет очки за уничтожение гема через IScoreService (или напрямую в GameBoard при отсутствии сервиса).
+    /// </summary>
     private void ScoreCheck(SC_Gem gemToCheck)
     {
         if (scoreService != null)
@@ -123,6 +130,9 @@ public class MatchResolver : IMatchResolver
         }
     }
 
+    /// <summary>
+    /// Уничтожает гем в указанной клетке: создаёт эффект разрушения, очищает ссылку в доске и возвращает объект в пул (или Destroy).
+    /// </summary>
     private void DestroyMatchedGemsAt(Vector2Int pos)
     {
         SC_Gem curGem = gameBoard.GetGem(pos.x, pos.y);
@@ -143,6 +153,9 @@ public class MatchResolver : IMatchResolver
         }
     }
 
+    /// <summary>
+    /// Собирает связную группу совпавших гемов одного типа, начиная с указанного гема (BFS по 4 направлениям).
+    /// </summary>
     private List<SC_Gem> GetConnectedMatchGroupFrom(SC_Gem startGem)
     {
         List<SC_Gem> result = new List<SC_Gem>();
@@ -191,6 +204,9 @@ public class MatchResolver : IMatchResolver
         return result;
     }
 
+    /// <summary>
+    /// Преобразует указанный гем в бомбу: выставляет параметры, меняет спрайт на бомбу и добавляет внутреннюю иконку исходного типа.
+    /// </summary>
     private void MakeGemBomb(SC_Gem gem)
     {
         if (gem == null) return;
@@ -252,9 +268,9 @@ public class MatchResolver : IMatchResolver
     }
 
     /// <summary>
-    /// Creates exactly one bomb from the current matches
-    /// if there is any connected group of 4+ gems of the same baseType.
-    /// Works for both user-initiated matches and cascade/refill matches.
+    /// Создаёт ровно одну бомбу из текущих совпадений,
+    /// если есть связная группа из 4+ гемов одного типа.
+    /// Работает для совпадений, инициированных игроком, и для каскадных/новых совпадений.
     /// </summary>
     private void TryCreateBombInMatches(List<SC_Gem> currentMatches)
     {

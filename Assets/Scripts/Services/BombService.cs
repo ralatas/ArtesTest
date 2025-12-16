@@ -4,6 +4,9 @@ using UnityEngine;
 public class BombService : IBombService
 {
     private readonly Queue<SC_Gem> pendingBombs = new Queue<SC_Gem>();
+    /// <summary>
+    /// Есть ли в очереди бомбы, ожидающие взрыва.
+    /// </summary>
 
     public bool HasPendingBombs => pendingBombs.Count > 0;
 
@@ -42,6 +45,9 @@ public class BombService : IBombService
         }
     }
 
+    /// <summary>
+    /// Возвращает список бомб из очереди и очищает очередь ожидания.
+    /// </summary>
     public IReadOnlyList<SC_Gem> ConsumePendingBombs()
     {
         var result = new List<SC_Gem>();
@@ -56,6 +62,10 @@ public class BombService : IBombService
         return result;
     }
 
+    /// <summary>
+    /// Возвращает все цели, которые должен уничтожить взрыв указанной бомбы.
+    /// Паттерн взрыва: 8 соседей вокруг бомбы + крест на расстоянии 2 клетки.
+    /// </summary>
     public IEnumerable<SC_Gem> GetExplosionTargets(SC_Gem bomb, GameBoard board)
     {
         var result = new HashSet<SC_Gem>();
@@ -109,6 +119,9 @@ public class BombService : IBombService
         return result;
     }
 
+    /// <summary>
+    /// Проверяет клетку (x,y) и, если там бомба, добавляет её в набор к подрыву.
+    /// </summary>
     private void TryAddAdjacentBomb(int x, int y, GameBoard board, HashSet<SC_Gem> bombs)
     {
         if (x < 0 || x >= board.Width || y < 0 || y >= board.Height)

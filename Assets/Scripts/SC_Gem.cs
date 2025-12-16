@@ -73,7 +73,10 @@ public class SC_Gem : MonoBehaviour
     }
 
     /// <summary>
-    /// Delegates swipe handling to the input service.
+    /// Обрабатывает операцию swipe.
+    /// Определяет направление свайпа и делегирует обработку ввода в InputService.
+    /// Нужно, чтобы вся логика перестановок/валидации ходов была централизована в сервисе ввода.
+    /// Параметры: отсутствуют.
     /// </summary>
     private void HandleSwipe()
     {

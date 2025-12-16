@@ -7,12 +7,19 @@ public class BoardRefillService : IBoardRefillService
     private readonly GameBoard gameBoard;
     private readonly SC_GameLogic gameLogic;
 
+    /// <summary>
+    /// Конструктор сервиса каскада и рефилла доски.
+    /// Сохраняет ссылки на GameBoard и SC_GameLogic.
+    /// </summary>
     public BoardRefillService(GameBoard gameBoard, SC_GameLogic gameLogic)
     {
         this.gameBoard = gameBoard;
         this.gameLogic = gameLogic;
     }
 
+    /// <summary>
+    /// Запускает полный цикл: таймаут → каскад существующих гемов → пауза → рефилл пустых клеток.
+    /// </summary>
     public IEnumerator CascadeAndRefillCo()
     {
         // A short pause before the start of the cascade, as before.
@@ -29,8 +36,8 @@ public class BoardRefillService : IBoardRefillService
     }
 
     /// <summary>
-    /// Makes existing gems fall down into empty cells (cascade).
-    /// Logic extracted from SC_GameLogic.DecreaseRowCo.
+    /// Заставляет существующие гемы падать вниз в пустые клетки (каскад).
+    /// Логика извлечена из SC_GameLogic.DecreaseRowCo.
     /// </summary>
     private IEnumerator CascadeExistingGemsCo()
     {
@@ -65,8 +72,8 @@ public class BoardRefillService : IBoardRefillService
     }
 
     /// <summary>
-    /// Spawns new gems into all empty cells and then removes any misplaced gems.
-    /// Logic extracted from SC_GameLogic.RefillBoardCo + CheckMisplacedGems.
+    /// Создает новые гемы во всех пустых клетках, а затем удаляет любые неправильно размещенные гемы.
+    /// Логика извлечена из SC_GameLogic.RefillBoardCo + CheckMisplacedGems.
     /// </summary>
     private IEnumerator RefillBoardInternalCo()
     {
@@ -100,8 +107,11 @@ public class BoardRefillService : IBoardRefillService
         // Cleanup: destroy any gems that are no longer referenced by the board.
         CleanupMisplacedGems();
     }
-
-    private void CleanupMisplacedGems()
+    /// <summary>
+    /// Удаляет «лишние» гемы на сцене, которые больше не присутствуют в ссылках GameBoard.
+    /// Нужно для уборки объектов, потерявших привязку к сетке.
+    /// </summary>
+     private void CleanupMisplacedGems()
     {
         List<SC_Gem> foundGems = new List<SC_Gem>();
         foundGems.AddRange(Object.FindObjectsOfType<SC_Gem>());

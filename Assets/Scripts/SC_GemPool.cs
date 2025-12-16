@@ -18,7 +18,7 @@ public class SC_GemPool : MonoBehaviour
         }
 
         Instance = this;
-        // Can be removed if persistence across scenes is not needed
+        
         DontDestroyOnLoad(gameObject);
     }
 
@@ -79,6 +79,11 @@ public class SC_GemPool : MonoBehaviour
         // Если нет ссылки на префаб — лучше удалить, чем ломать словарь
         if (prefab == null)
         {
+          /// <summary>
+          /// Удаляет/освобождает действие метода.
+          /// Выполняет часть игровой логики данного компонента.
+          /// Параметры: gem.gameObject.
+          /// </summary>
             Destroy(gem.gameObject);
             return;
         }
