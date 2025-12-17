@@ -5,5 +5,6 @@ using UnityEngine;
 public class GlobalEnums : MonoBehaviour
 {
     public enum GemType { blue, green, red, yellow, purple, bomb };
+    public enum RocketDirection { None, Horizontal, Vertical }
     public enum GameState { wait, move }
 }

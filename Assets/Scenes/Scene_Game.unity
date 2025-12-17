@@ -987,13 +987,19 @@ MonoBehaviour:
   - {fileID: 4372168081761593873, guid: 91ba2370328500d4db689dad894b1602, type: 3}
   bonusAmount: 0.5
   bombChance: 3
+  rocketHorizontal: {fileID: 7728721766547317714, guid: 5b3947cb7c249490fa1d4b90accaf22c,
+    type: 3}
+  rocketVertical: {fileID: 7728721766547317714, guid: 170970c45c2b9408fabe90341b922ddd,
+    type: 3}
   dropHeight: 1
   gemSpeed: 7
   scoreSpeed: 5
-  cascadeStepDelay: 0.05
-  spawnStaggerDelay: 0.03
   bombNeighborDelay: 0.2
   bombDestroyDelay: 0.2
+  cascadeStartDelay: 0.15
+  cascadeStepDelay: 0.05
+  spawnStaggerDelay: 0.03
+  swipeResist: 1
   rowsSize: 7
   colsSize: 7
 --- !u!1 &1450061018

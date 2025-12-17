@@ -8,6 +8,32 @@ public class BombService : IBombService
         if (bomb == null || board == null)
             yield break;
 
+        // Rocket: clear full row/column based on orientation.
+        if (bomb.isRocket && bomb.rocketDirection != GlobalEnums.RocketDirection.None)
+        {
+            if (bomb.rocketDirection == GlobalEnums.RocketDirection.Vertical)
+            {
+                int x = bomb.posIndex.x;
+                for (int y = 0; y < board.Height; y++)
+                {
+                    SC_Gem g = board.GetGem(x, y);
+                    if (g != null && g != bomb)
+                        yield return g;
+                }
+            }
+            else if (bomb.rocketDirection == GlobalEnums.RocketDirection.Horizontal)
+            {
+                int y = bomb.posIndex.y;
+                for (int x = 0; x < board.Width; x++)
+                {
+                    SC_Gem g = board.GetGem(x, y);
+                    if (g != null && g != bomb)
+                        yield return g;
+                }
+            }
+            yield break;
+        }
+
         Vector2Int center = bomb.posIndex;
 
         // 1) 8 neighbors around the bomb

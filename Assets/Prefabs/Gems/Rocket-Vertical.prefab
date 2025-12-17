@@ -22,23 +22,23 @@ PrefabInstance:
     - target: {fileID: -4313073739878660840, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
-      value: 2.56
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: -4313073739878660840, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.y
-      value: 2.56
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7667143225876670874, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
       propertyPath: m_Name
-      value: Bomb Variant
+      value: Rocket-Vertical
       objectReference: {fileID: 0}
     - target: {fileID: 7667143225876670884, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 2989d1272d50a449d8ff08ee79ea8125,
+      objectReference: {fileID: 21300000, guid: 83f871544e33048b59c00edbf7d35765,
         type: 3}
     - target: {fileID: 7667143225876670885, guid: 724e93e48c6cc0b4ab3d44e5ea34f2ec,
         type: 3}

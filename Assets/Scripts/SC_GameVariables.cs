@@ -9,6 +9,8 @@ public class SC_GameVariables : MonoBehaviour
     public SC_Gem[] gems;
     public float bonusAmount = 0.5f;
     public float bombChance = 2f;
+    public SC_Gem rocketHorizontal;
+    public SC_Gem rocketVertical;
     public int dropHeight = 0;
     public float gemSpeed;
     public float scoreSpeed = 5;

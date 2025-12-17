@@ -147,7 +147,11 @@ public class MatchResolver : IMatchResolver
 
         gem.type = GlobalEnums.GemType.bomb;
         gem.baseType = GlobalEnums.GemType.bomb;
+        gem.type = GlobalEnums.GemType.bomb;
+        gem.baseType = GlobalEnums.GemType.bomb;
         gem.isBomb = true;
+        gem.isRocket = false;
+        gem.rocketDirection = GlobalEnums.RocketDirection.None;
         gem.blastSize = bombTemplate.blastSize;
         gem.destroyEffect = bombTemplate.destroyEffect;
         gem.scoreValue = bombTemplate.scoreValue;
@@ -218,7 +222,13 @@ public class MatchResolver : IMatchResolver
                 if (candidate.isBomb)
                     continue;
 
-                MakeGemBomb(candidate);
+                GlobalEnums.RocketDirection rocketDir = DetermineLineDirection(group);
+                bool createRocket = group.Count == 4 && rocketDir != GlobalEnums.RocketDirection.None;
+
+                if (createRocket)
+                    MakeGemRocket(candidate, rocketDir);
+                else
+                    MakeGemBomb(candidate);
 
                 // This gem should not be destroyed as part of normal match resolution
                 currentMatches.Remove(candidate);
@@ -228,5 +238,74 @@ public class MatchResolver : IMatchResolver
                 return;
             }
         }
+    }
+    private GlobalEnums.RocketDirection DetermineLineDirection(List<SC_Gem> group)
+    {
+        if (group == null || group.Count == 0)
+            return GlobalEnums.RocketDirection.None;
+
+        bool sameX = true;
+        bool sameY = true;
+        int x0 = group[0].posIndex.x;
+        int y0 = group[0].posIndex.y;
+
+        foreach (var g in group)
+        {
+            if (g.posIndex.x != x0) sameX = false;
+            if (g.posIndex.y != y0) sameY = false;
+        }
+
+        if (sameY) return GlobalEnums.RocketDirection.Vertical;   // horizontal match -> vertical blast
+        if (sameX) return GlobalEnums.RocketDirection.Horizontal; // vertical match   -> horizontal blast
+        return GlobalEnums.RocketDirection.None;
+    }
+
+    private SC_Gem GetRocketTemplate(GlobalEnums.RocketDirection direction)
+    {
+        if (direction == GlobalEnums.RocketDirection.Vertical && SC_GameVariables.Instance.rocketVertical != null)
+            return SC_GameVariables.Instance.rocketVertical;
+        if (direction == GlobalEnums.RocketDirection.Horizontal && SC_GameVariables.Instance.rocketHorizontal != null)
+            return SC_GameVariables.Instance.rocketHorizontal;
+        return SC_GameVariables.Instance.bomb; // fallback
+    }
+
+    private void MakeGemRocket(SC_Gem gem, GlobalEnums.RocketDirection direction)
+    {
+        if (gem == null) return;
+
+        SC_Gem rocketTemplate = GetRocketTemplate(direction);
+        var templateSR = rocketTemplate != null ? rocketTemplate.GetComponent<SpriteRenderer>() : null;
+        var gemSR = gem.GetComponent<SpriteRenderer>();
+
+        gem.type = GlobalEnums.GemType.bomb;
+        gem.baseType = GlobalEnums.GemType.bomb;
+        gem.isBomb = true;
+        gem.isRocket = true;
+        gem.rocketDirection = direction;
+        if (rocketTemplate != null)
+        {
+            gem.blastSize = rocketTemplate.blastSize;
+            gem.destroyEffect = rocketTemplate.destroyEffect;
+            gem.scoreValue = rocketTemplate.scoreValue;
+        }
+
+        if (gemSR != null && templateSR != null)
+        {
+            gemSR.sprite = templateSR.sprite;
+            gemSR.color = templateSR.color;
+        }
+
+        Transform innerTransform = gem.transform.Find(SC_GameLogic.BombInnerSpriteName);
+        if (innerTransform != null)
+        {
+            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
+            if (innerSR != null)
+            {
+                innerSR.sprite = null;
+                innerSR.enabled = false;
+            }
+        }
+
+        gem.isMatch = false;
     }
 }

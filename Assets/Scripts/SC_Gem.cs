@@ -15,6 +15,10 @@ public class SC_Gem : MonoBehaviour
 
     [HideInInspector]
     public bool isBomb = false;
+    [HideInInspector]
+    public bool isRocket = false;
+    [HideInInspector]
+    public GlobalEnums.RocketDirection rocketDirection = GlobalEnums.RocketDirection.None;
 
     private Vector2 firstTouchPosition;
     private Vector2 finalTouchPosition;

@@ -132,6 +132,8 @@ public class SC_GameLogic : MonoBehaviour
         }
 
         gemInstance.isBomb = false;
+        gemInstance.isRocket = false;
+        gemInstance.rocketDirection = GlobalEnums.RocketDirection.None;
         gemInstance.baseType = gemInstance.type;
 
         // Reset main visual from prefab (in case this was a bomb before)
