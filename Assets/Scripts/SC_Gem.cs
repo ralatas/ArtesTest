@@ -71,12 +71,30 @@ public class SC_Gem : MonoBehaviour
             mousePressed = true;
         }
     }
+    private void OnMouseUp()
+    {
+        if (scGameLogic == null)
+            return;
+
+        if (scGameLogic.CurrentState != GlobalEnums.GameState.move)
+            return;
+
+        // Tap-to-explode for bombs (no swipe)
+        if (isBomb)
+        {
+            Vector2 releasePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            float dx = Mathf.Abs(releasePos.x - firstTouchPosition.x);
+            float dy = Mathf.Abs(releasePos.y - firstTouchPosition.y);
+
+            if (dx < SC_GameVariables.Instance.swipeResist && dy < SC_GameVariables.Instance.swipeResist)
+            {
+                scGameLogic.TriggerBomb(this);
+            }
+        }
+    }
 
     /// <summary>
-    /// Обрабатывает операцию swipe.
-    /// Определяет направление свайпа и делегирует обработку ввода в InputService.
-    /// Нужно, чтобы вся логика перестановок/валидации ходов была централизована в сервисе ввода.
-    /// Параметры: отсутствуют.
+    /// Delegates swipe handling to the input service.
     /// </summary>
     private void HandleSwipe()
     {

@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 
 /// <summary>
-/// Отвечает за обработку ввода игрока для свапа гемов (направление, обмен, валидация).
 /// Handles user input for gem swaps: interpreting swipe direction,
 /// performing swaps on the board and validating moves (reverting if no match).
 /// Extracted from SC_Gem to keep the gem component focused on visuals/state.
@@ -21,10 +20,6 @@ public interface IInputService
 public class InputService : IInputService
 {
     private readonly SC_GameLogic gameLogic;
-    /// <summary>
-    /// Конструктор сервиса ввода.
-    /// Получает ссылку на SC_GameLogic для доступа к доске и корутинам.
-    /// </summary>
 
     public InputService(SC_GameLogic gameLogic)
     {
@@ -101,13 +96,17 @@ public class InputService : IInputService
         // Remember last swap (for bomb creation etc.)
         gameLogic.RegisterSwap(gem, otherGem);
 
+        // If a bomb was swapped, activate it at the new position instead of normal match validation.
+        if (gem.isBomb || otherGem.isBomb)
+        {
+            if (gem.isBomb) gameLogic.TriggerBomb(gem);
+            if (otherGem.isBomb) gameLogic.TriggerBomb(otherGem);
+            return;
+        }
+
         // Run move validation coroutine via GameLogic MonoBehaviour
         gameLogic.StartCoroutine(CheckMoveCo(gem, otherGem, previousPos));
     }
-    /// <summary>
-    /// Проверяет корректность хода после свапа.
-    /// Если матч не образовался — откатывает обмен; иначе запускает уничтожение совпадений.
-    /// </summary>
 
     private IEnumerator CheckMoveCo(SC_Gem gem, SC_Gem otherGem, Vector2Int previousPos)
     {

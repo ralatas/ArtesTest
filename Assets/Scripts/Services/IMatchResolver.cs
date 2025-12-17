@@ -1,10 +1,11 @@
 using System.Collections;
+using System.Collections.Generic;
 
+/// <summary>
+/// Resolves color matches and destroys gems. Also provides explicit destruction API for bomb explosions.
+/// </summary>
 public interface IMatchResolver
 {
-    /// <summary>
-    /// Разрешает текущие совпадения: регистрирует бомбы/создаёт бомбу при 4+ и уничтожает обычные совпавшие гемы, затем запускает каскад.
-    /// </summary>
     IEnumerator DestroyMatchesCo();
-    IEnumerator HandleBombExplosionsAfterCascadeCo();
+    IEnumerator DestroyGemsCo(IReadOnlyCollection<SC_Gem> gemsToDestroy);
 }

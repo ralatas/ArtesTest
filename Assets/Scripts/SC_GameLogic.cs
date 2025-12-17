@@ -57,12 +57,6 @@ public class SC_GameLogic : MonoBehaviour
     #endregion
 
     #region Logic
-
-    /// <summary>
-    /// Инициализирует/настраивает действие метода.
-    /// Собирает объекты сцены с тегом UnityObject в словарь для быстрого доступа и запускает первичную настройку.
-    /// Параметры: отсутствуют.
-    /// </summary>
     private void Init()
     {
         unityObjects = new Dictionary<string, GameObject>();
@@ -72,12 +66,6 @@ public class SC_GameLogic : MonoBehaviour
         Setup();
     }
 
-    /// <summary>
-    /// Инициализирует/настраивает действие метода.
-    /// Создаёт фоновые тайлы и спавнит стартовые гемы без начальных совпадений.
-    /// Использует MatchesAt как защиту от стартовых матчей при генерации.
-    /// Параметры: отсутствуют.
-    /// </summary>
     private void Setup()
     {
         for (int x = 0; x < gameBoard.Width; x++)
@@ -100,11 +88,6 @@ public class SC_GameLogic : MonoBehaviour
             }
     }
 
-    /// <summary>
-    /// Запускает операцию game.
-    /// Инициализирует UI счёта стартовым значением из ScoreService (если есть) или из GameBoard.
-    /// Параметры: отсутствуют.
-    /// </summary>
     public void StartGame()
     {
         int initialScore = scoreService != null ? scoreService.Score : gameBoard.Score;
@@ -137,6 +120,15 @@ public class SC_GameLogic : MonoBehaviour
         }
 
         // Reset bomb state
+        SC_Gem prefab = gemInstance.prefabReference != null ? gemInstance.prefabReference : _GemToSpawn;
+        if (prefab != null)
+        {
+            gemInstance.type = prefab.type;
+            gemInstance.scoreValue = prefab.scoreValue;
+            gemInstance.destroyEffect = prefab.destroyEffect;
+            gemInstance.blastSize = prefab.blastSize;
+        }
+
         gemInstance.isBomb = false;
         gemInstance.baseType = gemInstance.type;
 
@@ -182,6 +174,69 @@ public class SC_GameLogic : MonoBehaviour
     {
         return gameBoard.GetGem(_X, _Y);
     }
+    public void SetState(GlobalEnums.GameState _CurrentState)
+    {
+        currentState = _CurrentState;
+    }
+
+    public void DestroyMatches()
+    {
+        if (matchResolver != null)
+            StartCoroutine(matchResolver.DestroyMatchesCo());
+    }
+
+    public void FindAllMatches()
+    {
+        gameBoard.FindAllMatches();
+    }
+
+    public void TriggerBomb(SC_Gem bomb)
+    {
+        if (bomb == null || !bomb.isBomb)
+            return;
+
+        // Royal Match-like behavior: bomb can be activated only when the board is ready for input.
+        if (currentState != GlobalEnums.GameState.move)
+            return;
+
+        currentState = GlobalEnums.GameState.wait;
+        StartCoroutine(TriggerBombCo(bomb));
+    }
+
+    private IEnumerator TriggerBombCo(SC_Gem startBomb)
+    {
+        // Collect chain-reaction bombs and all affected gems.
+        var bombsQueue = new Queue<SC_Gem>();
+        var visitedBombs = new HashSet<SC_Gem>();
+        var destroySet = new HashSet<SC_Gem>();
+
+        bombsQueue.Enqueue(startBomb);
+        visitedBombs.Add(startBomb);
+
+        while (bombsQueue.Count > 0)
+        {
+            SC_Gem bomb = bombsQueue.Dequeue();
+            destroySet.Add(bomb);
+
+            foreach (var target in bombService.GetExplosionTargets(bomb, gameBoard))
+            {
+                if (target == null)
+                    continue;
+
+                destroySet.Add(target);
+
+                if (target.isBomb && !visitedBombs.Contains(target))
+                {
+                    visitedBombs.Add(target);
+                    bombsQueue.Enqueue(target);
+                }
+            }
+        }
+
+        // Destroy affected gems (including bombs) and then cascade.
+        yield return StartCoroutine(matchResolver.DestroyGemsCo(destroySet));
+        StartCascade();
+    }
 
     public void StartCascade()
     {
@@ -197,65 +252,22 @@ public class SC_GameLogic : MonoBehaviour
         yield return StartCoroutine(boardRefillService.CascadeAndRefillCo());
 
         // After refill, keep original timing before checking for new matches
-        /// <summary>
-        /// Выполняет операцию for seconds.
-        /// Выполняет часть игровой логики данного компонента.
-        /// Параметры: 0.5f.
-        /// </summary>
         yield return new WaitForSeconds(0.5f);
 
         gameBoard.FindAllMatches();
 
         if (gameBoard.CurrentMatches.Count > 0)
         {
-            /// <summary>
-            /// Выполняет операцию for seconds.
-            /// Выполняет часть игровой логики данного компонента.
-            /// Параметры: 0.5f.
-            /// </summary>
             yield return new WaitForSeconds(0.5f);
-          /// <summary>
-          /// Удаляет/освобождает операцию matches.
-          /// Запускает процесс удаления текущих совпадений через MatchResolver (асинхронно, в корутине).
-          /// Параметры: отсутствуют.
-          /// </summary>
             DestroyMatches();
         }
         else
         {
-            // No more matches. Check if there are any bombs waiting to explode.
-            if (bombService != null && bombService.HasPendingBombs && matchResolver != null)
-            {
-                // Handle bombs: wait 1 second, then explode them via MatchResolver
-                yield return StartCoroutine(matchResolver.HandleBombExplosionsAfterCascadeCo());
-            }
-            else
-            {
-                /// <summary>
-                /// Выполняет операцию for seconds.
-                /// Выполняет часть игровой логики данного компонента.
-                /// Параметры: 0.5f.
-                /// </summary>
-                yield return new WaitForSeconds(0.5f);
-                currentState = GlobalEnums.GameState.move;
-            }
+            // No more matches.
+            yield return new WaitForSeconds(0.5f);
+            currentState = GlobalEnums.GameState.move;
+            
         }
-    }
-
-    public void SetState(GlobalEnums.GameState _CurrentState)
-    {
-        currentState = _CurrentState;
-    }
-
-    public void DestroyMatches()
-    {
-        if (matchResolver != null)
-            StartCoroutine(matchResolver.DestroyMatchesCo());
-    }
-
-    public void FindAllMatches()
-    {
-        gameBoard.FindAllMatches();
     }
     #endregion
 }

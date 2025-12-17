@@ -46,6 +46,10 @@ public class GameBoard
         if (gemToCheck == null)
             return false;
 
+        // Bombs never participate in color matches
+        if (gemToCheck.isBomb)
+            return false;
+
         int x = positionToCheck.x;
         int y = positionToCheck.y;
 
@@ -91,6 +95,11 @@ public class GameBoard
             for (int y = 0; y < height; y++)
             {
                 SC_Gem currentGem = allGems[x, y];
+                if (currentGem != null)
+                {
+                    if (currentGem.isBomb)
+                        continue;
+                }
                 if (currentGem != null)
                 {
                     if (x > 0 && x < width - 1)

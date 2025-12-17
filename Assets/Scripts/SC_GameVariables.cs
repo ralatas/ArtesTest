@@ -12,11 +12,22 @@ public class SC_GameVariables : MonoBehaviour
     public int dropHeight = 0;
     public float gemSpeed;
     public float scoreSpeed = 5;
-    public float cascadeStepDelay = 0.03f; // delay between falls inside cascade (existing gems)
-    public float spawnStaggerDelay = 0.05f; //delay between spawning new gems
     public float bombNeighborDelay = 0.2f; // delay before destroying neighbors
     public float bombDestroyDelay = 0.2f;  // delay before destroying the bomb itself
-    
+
+    [Header("Cascade Timings")]
+    [Tooltip("Delay before cascade starts after matches/bombs")]
+    public float cascadeStartDelay = 0.15f;
+
+    [Tooltip("Delay between cascade steps inside a column")]
+    public float cascadeStepDelay = 0.05f;
+
+    [Tooltip("Delay between spawning new gems")]
+    public float spawnStaggerDelay = 0.04f;
+
+    [Tooltip("Minimum swipe distance required to register a swipe")]
+    public float swipeResist = 1f;
+
     [HideInInspector]
     public int rowsSize = 7;
     [HideInInspector]

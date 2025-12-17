@@ -7,26 +7,19 @@ public class MatchResolver : IMatchResolver
     private readonly SC_GameLogic gameLogic;
     private readonly GameBoard gameBoard;
     private readonly IBombService bombService;
-    private readonly IScoreService scoreService;
 
-    /// <summary>
-    /// Конструктор резолвера матчей.
-    /// Получает ссылки на GameLogic/Board и сервисы бомб и счёта.
-    /// </summary>
-    public MatchResolver(SC_GameLogic gameLogic, GameBoard gameBoard, IBombService bombService, IScoreService scoreService)
+    public MatchResolver(SC_GameLogic gameLogic, GameBoard gameBoard, IBombService bombService)
     {
         this.gameLogic = gameLogic;
         this.gameBoard = gameBoard;
         this.bombService = bombService;
-        this.scoreService = scoreService;
     }
 
     /// <summary>
-    /// Разрешает текущие совпадения:
-    /// - активирует бомбы в BombService (бомбы внутри или рядом с совпадениями),
-    /// - создаёт ровно одну бомбу из любого совпадения 4+ гемов,
-    /// - уничтожает только обычные совпавшие гемы (бомбы сохраняются для отложенного взрыва),
-    /// - затем запускает каскадирование.
+    /// Resolves current matches:
+    /// - creates exactly one bomb from any 4+ connected match,
+    /// - destroys only regular matched gems (bombs stay for manual trigger or chain reaction),
+    /// - then starts cascading.
     /// </summary>
     public IEnumerator DestroyMatchesCo()
     {
@@ -34,20 +27,14 @@ public class MatchResolver : IMatchResolver
         if (matches.Count == 0)
             yield break;
 
-        // 1) Trigger bombs for this match (bomb in the match or adjacent to it)
-        bombService.RegisterMatch(matches, gameBoard);
-
-        // 2) Create a bomb from any 4+ match in this wave (including cascades)
+        // 2) Create a bomb from any 4+ match in this wave (including cascades).
         TryCreateBombInMatches(matches);
 
-        // 3) Destroy only regular matched gems; bombs will explode later
+        // 3) Destroy only regular matched gems; bombs will explode later.
         foreach (SC_Gem gem in matches)
         {
             if (gem != null && gem.isMatch && !gem.isBomb)
-            {
-                ScoreCheck(gem);
                 DestroyMatchedGemsAt(gem.posIndex);
-            }
         }
 
         yield return new WaitForSeconds(0.2f);
@@ -56,106 +43,54 @@ public class MatchResolver : IMatchResolver
         gameLogic.StartCascade();
     }
 
-    /// <summary>
-    /// Обрабатывает отложенные взрывы бомб после всех каскадов и пополнений:
-    /// - ждёт 1 секунду,
-    /// - взрывает все ожидающие бомбы (сначала соседей, потом сами бомбы),
-    /// - затем запускает ещё один каскад.
-    /// </summary>
-    public IEnumerator HandleBombExplosionsAfterCascadeCo()
-    {
-        // 1) Wait 1 second AFTER all cascades and refills
-        yield return new WaitForSeconds(1.0f);
-
-        var bombsToExplode = bombService.ConsumePendingBombs();
-        if (bombsToExplode == null || bombsToExplode.Count == 0)
-        {
-            // No bombs actually pending – return control to player
-            gameLogic.SetState(GlobalEnums.GameState.move);
-            yield break;
-        }
-
-        // 2) Collect all neighbors to destroy (once), so we do not double-hit same gem
-        var neighborsToDestroy = new HashSet<SC_Gem>();
-
-        foreach (var bomb in bombsToExplode)
-        {
-            if (bomb == null)
-                continue;
-
-            foreach (var target in bombService.GetExplosionTargets(bomb, gameBoard))
-            {
-                if (target != null && target != bomb)
-                    neighborsToDestroy.Add(target);
-            }
-        }
-
-        // 3) Destroy neighbors first
-        foreach (var gem in neighborsToDestroy)
-        {
-            if (gem != null)
-            {
-                ScoreCheck(gem);
-                DestroyMatchedGemsAt(gem.posIndex);
-            }
-        }
-
-        // 4) Destroy bombs themselves
-        foreach (var bomb in bombsToExplode)
-        {
-            if (bomb != null)
-            {
-                ScoreCheck(bomb);
-                DestroyMatchedGemsAt(bomb.posIndex);
-            }
-        }
-
-        // 5) Launch standard cascade after explosions
-        gameLogic.StartCascade();
-    }
-
-    /// <summary>
-    /// Начисляет очки за уничтожение гема через IScoreService (или напрямую в GameBoard при отсутствии сервиса).
-    /// </summary>
     private void ScoreCheck(SC_Gem gemToCheck)
     {
-        if (scoreService != null)
-        {
-            scoreService.AddGemScore(gemToCheck);
-        }
-        else if (gemToCheck != null)
-        {
-            // Fallback in case scoreService is not provided
-            gameBoard.Score += gemToCheck.scoreValue;
-        }
+        gameBoard.Score += gemToCheck.scoreValue;
     }
 
     /// <summary>
-    /// Уничтожает гем в указанной клетке: создаёт эффект разрушения, очищает ссылку в доске и возвращает объект в пул (или Destroy).
+    /// Destroys an explicit set of gems (used for bomb explosions).
+    /// This method does NOT create new bombs from 4+ matches.
     /// </summary>
-    private void DestroyMatchedGemsAt(Vector2Int pos)
+    public IEnumerator DestroyGemsCo(IReadOnlyCollection<SC_Gem> gemsToDestroy)
+    {
+        if (gemsToDestroy == null || gemsToDestroy.Count == 0)
+            yield break;
+
+        foreach (var gem in gemsToDestroy)
+        {
+            if (gem == null)
+                continue;
+
+            DestroyGemAt(gem.posIndex, allowBombDestroy: true);
+            yield return new WaitForSeconds(0.02f);
+        }
+    }
+
+    private void DestroyGemAt(Vector2Int pos, bool allowBombDestroy)
     {
         SC_Gem curGem = gameBoard.GetGem(pos.x, pos.y);
-        if (curGem != null)
-        {
-            Object.Instantiate(curGem.destroyEffect, new Vector2(pos.x, pos.y), Quaternion.identity);
+        if (curGem == null)
+            return;
 
-            gameLogic.SetGem(pos.x, pos.y, null);
+        if (curGem.isBomb && !allowBombDestroy)
+            return;
 
-            if (SC_GemPool.Instance != null)
-            {
-                SC_GemPool.Instance.Release(curGem);
-            }
-            else
-            {
-                Object.Destroy(curGem.gameObject);
-            }
-        }
+        ScoreCheck(curGem);
+        Object.Instantiate(curGem.destroyEffect, new Vector2(pos.x, pos.y), Quaternion.identity);
+        gameLogic.SetGem(pos.x, pos.y, null);
+
+        if (SC_GemPool.Instance != null)
+            SC_GemPool.Instance.Release(curGem);
+        else
+            Object.Destroy(curGem.gameObject);
     }
 
-    /// <summary>
-    /// Собирает связную группу совпавших гемов одного типа, начиная с указанного гема (BFS по 4 направлениям).
-    /// </summary>
+    private void DestroyMatchedGemsAt(Vector2Int pos)
+    {
+        DestroyGemAt(pos, allowBombDestroy: false);
+    }
+
     private List<SC_Gem> GetConnectedMatchGroupFrom(SC_Gem startGem)
     {
         List<SC_Gem> result = new List<SC_Gem>();
@@ -204,22 +139,21 @@ public class MatchResolver : IMatchResolver
         return result;
     }
 
-    /// <summary>
-    /// Преобразует указанный гем в бомбу: выставляет параметры, меняет спрайт на бомбу и добавляет внутреннюю иконку исходного типа.
-    /// </summary>
     private void MakeGemBomb(SC_Gem gem)
     {
         if (gem == null) return;
 
         SC_Gem bombTemplate = SC_GameVariables.Instance.bomb;
 
+        gem.type = GlobalEnums.GemType.bomb;
+        gem.baseType = GlobalEnums.GemType.bomb;
         gem.isBomb = true;
         gem.blastSize = bombTemplate.blastSize;
         gem.destroyEffect = bombTemplate.destroyEffect;
         gem.scoreValue = bombTemplate.scoreValue;
 
         var bombSR = bombTemplate.GetComponent<SpriteRenderer>();
-        var gemSR  = gem.GetComponent<SpriteRenderer>();
+        var gemSR = gem.GetComponent<SpriteRenderer>();
         if (gemSR == null || bombSR == null)
         {
             // Fallback: just mark as bomb without visual if something is missing
@@ -227,50 +161,28 @@ public class MatchResolver : IMatchResolver
             return;
         }
 
-        // 1) Remember original sprite (color/type that formed this bomb)
-        Sprite originalSprite = gemSR.sprite;
-
-        // 2) Set bomb base sprite
+        // Set bomb base sprite and hide any inner color marker to detach from source gem type.
         gemSR.sprite = bombSR.sprite;
-
-        // 3) Setup / create inner sprite for original gem icon
+        gemSR.color = bombSR.color;
         Transform innerTransform = gem.transform.Find(SC_GameLogic.BombInnerSpriteName);
-        SpriteRenderer innerSR;
-
-        if (innerTransform == null)
+        if (innerTransform != null)
         {
-            GameObject innerObj = new GameObject(SC_GameLogic.BombInnerSpriteName);
-            innerObj.transform.SetParent(gem.transform);
-            innerObj.transform.localPosition = Vector3.zero;
-            innerObj.transform.localRotation = Quaternion.identity;
-            innerObj.transform.localScale = Vector3.one * 0.6f; // slightly smaller than bomb
-
-            innerSR = innerObj.AddComponent<SpriteRenderer>();
+            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
+            if (innerSR != null)
+            {
+                innerSR.sprite = null;
+                innerSR.enabled = false;
+            }
         }
-        else
-        {
-            innerSR = innerTransform.GetComponent<SpriteRenderer>();
-            if (innerSR == null)
-                innerSR = innerTransform.gameObject.AddComponent<SpriteRenderer>();
-
-            innerTransform.localPosition = Vector3.zero;
-            innerTransform.localRotation = Quaternion.identity;
-            innerTransform.localScale = Vector3.one * 0.6f;
-        }
-
-        innerSR.sprite = originalSprite;
-        innerSR.sortingLayerID = gemSR.sortingLayerID;
-        innerSR.sortingOrder = gemSR.sortingOrder + 1; // draw above bomb base
-        innerSR.enabled = true;
 
         // Keep baseType as match color; just clear match flag for this turn
         gem.isMatch = false;
     }
 
     /// <summary>
-    /// Создаёт ровно одну бомбу из текущих совпадений,
-    /// если есть связная группа из 4+ гемов одного типа.
-    /// Работает для совпадений, инициированных игроком, и для каскадных/новых совпадений.
+    /// Creates exactly one bomb from the current matches
+    /// if there is any connected group of 4+ gems of the same baseType.
+    /// Works for both user-initiated matches and cascade/refill matches.
     /// </summary>
     private void TryCreateBombInMatches(List<SC_Gem> currentMatches)
     {

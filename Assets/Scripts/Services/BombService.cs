@@ -3,74 +3,10 @@ using UnityEngine;
 
 public class BombService : IBombService
 {
-    private readonly Queue<SC_Gem> pendingBombs = new Queue<SC_Gem>();
-    /// <summary>
-    /// Есть ли в очереди бомбы, ожидающие взрыва.
-    /// </summary>
-
-    public bool HasPendingBombs => pendingBombs.Count > 0;
-
-    public void RegisterMatch(IReadOnlyList<SC_Gem> matchedGems, GameBoard board)
-    {
-        if (matchedGems == null || board == null)
-            return;
-
-        var bombsToQueue = new HashSet<SC_Gem>();
-
-        foreach (var gem in matchedGems)
-        {
-            if (gem == null)
-                continue;
-
-            // 1) Bombs that are part of the match itself
-            if (gem.isBomb)
-                bombsToQueue.Add(gem);
-
-            // 2) Bombs adjacent (orthogonal) to matched gems
-            Vector2Int pos = gem.posIndex;
-            TryAddAdjacentBomb(pos.x - 1, pos.y, board, bombsToQueue);
-            TryAddAdjacentBomb(pos.x + 1, pos.y, board, bombsToQueue);
-            TryAddAdjacentBomb(pos.x, pos.y - 1, board, bombsToQueue);
-            TryAddAdjacentBomb(pos.x, pos.y + 1, board, bombsToQueue);
-        }
-
-        foreach (var bomb in bombsToQueue)
-        {
-            if (bomb == null)
-                continue;
-
-            // avoid duplicates inside the queue
-            if (!pendingBombs.Contains(bomb))
-                pendingBombs.Enqueue(bomb);
-        }
-    }
-
-    /// <summary>
-    /// Возвращает список бомб из очереди и очищает очередь ожидания.
-    /// </summary>
-    public IReadOnlyList<SC_Gem> ConsumePendingBombs()
-    {
-        var result = new List<SC_Gem>();
-
-        while (pendingBombs.Count > 0)
-        {
-            var bomb = pendingBombs.Dequeue();
-            if (bomb != null)
-                result.Add(bomb);
-        }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Возвращает все цели, которые должен уничтожить взрыв указанной бомбы.
-    /// Паттерн взрыва: 8 соседей вокруг бомбы + крест на расстоянии 2 клетки.
-    /// </summary>
     public IEnumerable<SC_Gem> GetExplosionTargets(SC_Gem bomb, GameBoard board)
     {
-        var result = new HashSet<SC_Gem>();
         if (bomb == null || board == null)
-            return result;
+            yield break;
 
         Vector2Int center = bomb.posIndex;
 
@@ -88,9 +24,9 @@ public class BombService : IBombService
                 if (nx < 0 || nx >= board.Width || ny < 0 || ny >= board.Height)
                     continue;
 
-                var gem = board.GetGem(nx, ny);
-                if (gem != null)
-                    result.Add(gem);
+                SC_Gem g = board.GetGem(nx, ny);
+                if (g != null)
+                    yield return g;
             }
         }
 
@@ -111,24 +47,9 @@ public class BombService : IBombService
             if (nx < 0 || nx >= board.Width || ny < 0 || ny >= board.Height)
                 continue;
 
-            var gem = board.GetGem(nx, ny);
-            if (gem != null)
-                result.Add(gem);
+            SC_Gem g = board.GetGem(nx, ny);
+            if (g != null)
+                yield return g;
         }
-
-        return result;
-    }
-
-    /// <summary>
-    /// Проверяет клетку (x,y) и, если там бомба, добавляет её в набор к подрыву.
-    /// </summary>
-    private void TryAddAdjacentBomb(int x, int y, GameBoard board, HashSet<SC_Gem> bombs)
-    {
-        if (x < 0 || x >= board.Width || y < 0 || y >= board.Height)
-            return;
-
-        var neighbor = board.GetGem(x, y);
-        if (neighbor != null && neighbor.isBomb)
-            bombs.Add(neighbor);
     }
 }
