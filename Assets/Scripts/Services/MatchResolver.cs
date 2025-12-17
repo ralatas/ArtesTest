@@ -205,9 +205,14 @@ public class MatchResolver : IMatchResolver
             // We only care about groups of size >= 4
             if (group.Count >= 4)
             {
-                // Choose any gem from this group to become a bomb.
-                // You can change this selection strategy if needed
-                SC_Gem candidate = group[0];
+                // Prefer the swapped gem (if part of the group) so the bomb appears where the move happened.
+                SC_Gem candidate = null;
+                if (gameLogic.LastMovedGemA != null && group.Contains(gameLogic.LastMovedGemA))
+                    candidate = gameLogic.LastMovedGemA;
+                else if (gameLogic.LastMovedGemB != null && group.Contains(gameLogic.LastMovedGemB))
+                    candidate = gameLogic.LastMovedGemB;
+                else
+                    candidate = group[0];
 
                 // Skip if it is already a bomb
                 if (candidate.isBomb)

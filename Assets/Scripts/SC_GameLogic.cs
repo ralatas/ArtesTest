@@ -21,6 +21,8 @@ public class SC_GameLogic : MonoBehaviour
     private SC_Gem lastMovedGemB;
 
     public IInputService InputService => inputService;
+    public SC_Gem LastMovedGemA => lastMovedGemA;
+    public SC_Gem LastMovedGemB => lastMovedGemB;
 
     public const string BombInnerSpriteName = "BombInnerSprite";
 

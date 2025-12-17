@@ -99,13 +99,29 @@ public class InputService : IInputService
         // If a bomb was swapped, activate it at the new position instead of normal match validation.
         if (gem.isBomb || otherGem.isBomb)
         {
-            if (gem.isBomb) gameLogic.TriggerBomb(gem);
-            if (otherGem.isBomb) gameLogic.TriggerBomb(otherGem);
+            gameLogic.StartCoroutine(TriggerBombAfterSwapCo(gem, otherGem));
             return;
         }
 
         // Run move validation coroutine via GameLogic MonoBehaviour
         gameLogic.StartCoroutine(CheckMoveCo(gem, otherGem, previousPos));
+    }
+
+    private IEnumerator TriggerBombAfterSwapCo(SC_Gem gem, SC_Gem otherGem)
+    {
+        yield return new WaitForSeconds(.5f);
+        // Wait until both swapped gems finish moving to their new board positions.
+        bool IsSettled(SC_Gem g) =>
+            g == null || Vector2.Distance(g.transform.position, g.posIndex) <= 0.01f;
+
+        while (!IsSettled(gem) || !IsSettled(otherGem))
+            yield return null;
+
+        if (gem != null && gem.isBomb)
+            gameLogic.TriggerBomb(gem);
+
+        if (otherGem != null && otherGem.isBomb)
+            gameLogic.TriggerBomb(otherGem);
     }
 
     private IEnumerator CheckMoveCo(SC_Gem gem, SC_Gem otherGem, Vector2Int previousPos)
