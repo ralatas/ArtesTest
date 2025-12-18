@@ -23,6 +23,14 @@ public class Match3Installer : MonoInstaller
             .To<BombService>()
             .AsSingle();
 
+        Container.Bind<IBombBehavior>()
+            .To<RocketBombBehavior>()
+            .AsTransient();
+
+        Container.Bind<IBombBehavior>()
+            .To<AreaBombBehavior>()
+            .AsTransient();
+
         Container.Bind<IScoreService>()
             .To<ScoreService>()
             .AsSingle();
