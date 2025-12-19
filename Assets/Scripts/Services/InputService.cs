@@ -21,17 +21,21 @@ public class InputService : IInputService
 {
     private readonly SC_GameLogic gameLogic;
     private readonly GameBoard gameBoard;
+    private readonly IHintService hintService;
 
-    public InputService(SC_GameLogic gameLogic, GameBoard gameBoard)
+    public InputService(SC_GameLogic gameLogic, GameBoard gameBoard, IHintService hintService)
     {
         this.gameLogic = gameLogic;
         this.gameBoard = gameBoard;
+        this.hintService = hintService;
     }
 
     public void HandleSwipe(SC_Gem gem, Vector2 firstTouchPosition, Vector2 finalTouchPosition)
     {
         if (gem == null || gameLogic == null)
             return;
+
+        hintService?.RegisterActivity();
 
         if (gameLogic.CurrentState != GlobalEnums.GameState.move)
             return;

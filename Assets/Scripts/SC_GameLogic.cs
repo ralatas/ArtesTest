@@ -15,6 +15,7 @@ public class SC_GameLogic : MonoBehaviour
     private IGemSpawnService gemSpawnService;
     private IBoardRefillService boardRefillService;
     private IInputService inputService;
+    private IHintService hintService;
     private IMatchResolver matchResolver;
 
     private GlobalEnums.GameState currentState = GlobalEnums.GameState.move;
@@ -37,6 +38,7 @@ public class SC_GameLogic : MonoBehaviour
         IGemSpawnService gemSpawnService,
         IBoardRefillService boardRefillService,
         IInputService inputService,
+        IHintService hintService,
         IMatchResolver matchResolver)
     {
         this.gameBoard = gameBoard;
@@ -45,6 +47,7 @@ public class SC_GameLogic : MonoBehaviour
         this.gemSpawnService = gemSpawnService;
         this.boardRefillService = boardRefillService;
         this.inputService = inputService;
+        this.hintService = hintService;
         this.matchResolver = matchResolver;
     }
 
@@ -60,6 +63,7 @@ public class SC_GameLogic : MonoBehaviour
         float targetScore = scoreService != null ? scoreService.Score : gameBoard.Score;
         displayScore = Mathf.Lerp(displayScore, targetScore, SC_GameVariables.Instance.scoreSpeed * Time.deltaTime);
         ScoreText.text = displayScore.ToString("0");
+        hintService?.Tick(Time.deltaTime, currentState);
     }
     #endregion
 
@@ -101,6 +105,8 @@ public class SC_GameLogic : MonoBehaviour
     {
         if (bomb == null || !bomb.IsBomb)
             return;
+
+        hintService?.RegisterActivity();
 
         // Royal Match-like behavior: bomb can be activated only when the board is ready for input.
         if (currentState != GlobalEnums.GameState.move)

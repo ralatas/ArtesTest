@@ -26,6 +26,10 @@ public class Match3Installer : MonoInstaller
             .To<GemSpawnService>()
             .AsSingle();
 
+        Container.Bind<IHintService>()
+            .To<HintService>()
+            .AsSingle();
+
         Container.Bind<IBombBehavior>()
             .To<RocketBombBehavior>()
             .AsTransient();
