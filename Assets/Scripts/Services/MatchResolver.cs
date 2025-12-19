@@ -78,7 +78,7 @@ public class MatchResolver : IMatchResolver
 
         ScoreCheck(curGem);
         Object.Instantiate(curGem.destroyEffect, new Vector2(pos.x, pos.y), Quaternion.identity);
-        gameLogic.SetGem(pos.x, pos.y, null);
+        gameBoard.SetGem(pos.x, pos.y, null);
 
         if (SC_GemPool.Instance != null)
             SC_GemPool.Instance.Release(curGem);

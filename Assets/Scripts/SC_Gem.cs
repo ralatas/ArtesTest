@@ -46,7 +46,7 @@ public class SC_Gem : MonoBehaviour
         else
         {
             transform.position = new Vector3(posIndex.x, posIndex.y, 0);
-            scGameLogic.SetGem(posIndex.x, posIndex.y, this);
+            scGameLogic.Board.SetGem(posIndex.x, posIndex.y, this);
         }
 
         // Handle mouse/touch release

@@ -27,6 +27,7 @@ public class SC_GameLogic : MonoBehaviour
     public SC_Gem LastMovedGemB => lastMovedGemB;
     public Transform GemsHolder => gemsHolder;
     public TextMeshProUGUI ScoreText => scoreText;
+    public GameBoard Board => gameBoard;
 
     [Inject]
     public void Construct(
@@ -80,15 +81,6 @@ public class SC_GameLogic : MonoBehaviour
         lastMovedGemB = second;
     }
 
-    public void SetGem(int _X, int _Y, SC_Gem _Gem)
-    {
-        gameBoard.SetGem(_X, _Y, _Gem);
-    }
-
-    public SC_Gem GetGem(int _X, int _Y)
-    {
-        return gameBoard.GetGem(_X, _Y);
-    }
     public void SetState(GlobalEnums.GameState _CurrentState)
     {
         currentState = _CurrentState;

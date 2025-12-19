@@ -20,10 +20,12 @@ public interface IInputService
 public class InputService : IInputService
 {
     private readonly SC_GameLogic gameLogic;
+    private readonly GameBoard gameBoard;
 
-    public InputService(SC_GameLogic gameLogic)
+    public InputService(SC_GameLogic gameLogic, GameBoard gameBoard)
     {
         this.gameLogic = gameLogic;
+        this.gameBoard = gameBoard;
     }
 
     public void HandleSwipe(SC_Gem gem, Vector2 firstTouchPosition, Vector2 finalTouchPosition)
@@ -51,7 +53,7 @@ public class InputService : IInputService
         // Decide direction by angle, same logic as before but moved here
         if (swipeAngle < 45 && swipeAngle > -45 && posIndex.x < SC_GameVariables.Instance.rowsSize - 1)
         {
-            otherGem = gameLogic.GetGem(posIndex.x + 1, posIndex.y);
+            otherGem = gameBoard.GetGem(posIndex.x + 1, posIndex.y);
             if (otherGem == null) return;
 
             otherGem.posIndex = new Vector2Int(otherGem.posIndex.x - 1, otherGem.posIndex.y);
@@ -59,7 +61,7 @@ public class InputService : IInputService
         }
         else if (swipeAngle > 45 && swipeAngle <= 135 && posIndex.y < SC_GameVariables.Instance.colsSize - 1)
         {
-            otherGem = gameLogic.GetGem(posIndex.x, posIndex.y + 1);
+            otherGem = gameBoard.GetGem(posIndex.x, posIndex.y + 1);
             if (otherGem == null) return;
 
             otherGem.posIndex = new Vector2Int(otherGem.posIndex.x, otherGem.posIndex.y - 1);
@@ -67,7 +69,7 @@ public class InputService : IInputService
         }
         else if (swipeAngle < -45 && swipeAngle >= -135 && posIndex.y > 0)
         {
-            otherGem = gameLogic.GetGem(posIndex.x, posIndex.y - 1);
+            otherGem = gameBoard.GetGem(posIndex.x, posIndex.y - 1);
             if (otherGem == null) return;
 
             otherGem.posIndex = new Vector2Int(otherGem.posIndex.x, otherGem.posIndex.y + 1);
@@ -76,7 +78,7 @@ public class InputService : IInputService
         else if ((swipeAngle > 135 || swipeAngle < -135) && posIndex.x > 0)
         {
             // Otherwise for swipeAngle > 135 and posIndex.x == 0, GetGem(-1, y) would be called.
-            otherGem = gameLogic.GetGem(posIndex.x - 1, posIndex.y);
+            otherGem = gameBoard.GetGem(posIndex.x - 1, posIndex.y);
             if (otherGem == null) return;
 
             otherGem.posIndex = new Vector2Int(otherGem.posIndex.x + 1, otherGem.posIndex.y);
@@ -90,8 +92,8 @@ public class InputService : IInputService
         gem.posIndex = posIndex;
 
         // Update board references
-        gameLogic.SetGem(gem.posIndex.x, gem.posIndex.y, gem);
-        gameLogic.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
+        gameBoard.SetGem(gem.posIndex.x, gem.posIndex.y, gem);
+        gameBoard.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
 
         // Remember last swap (for bomb creation etc.)
         gameLogic.RegisterSwap(gem, otherGem);
@@ -141,8 +143,8 @@ public class InputService : IInputService
                 otherGem.posIndex = currentPos;
                 gem.posIndex = previousPos;
 
-                gameLogic.SetGem(gem.posIndex.x, gem.posIndex.y, gem);
-                gameLogic.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
+                gameBoard.SetGem(gem.posIndex.x, gem.posIndex.y, gem);
+                gameBoard.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
 
                 yield return new WaitForSeconds(.5f);
                 gameLogic.SetState(GlobalEnums.GameState.move);
