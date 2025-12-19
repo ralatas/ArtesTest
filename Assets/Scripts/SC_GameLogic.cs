@@ -28,8 +28,6 @@ public class SC_GameLogic : MonoBehaviour
     public Transform GemsHolder => gemsHolder;
     public TextMeshProUGUI ScoreText => scoreText;
 
-    public const string BombInnerSpriteName = "BombInnerSprite";
-
     [Inject]
     public void Construct(
         GameBoard gameBoard,

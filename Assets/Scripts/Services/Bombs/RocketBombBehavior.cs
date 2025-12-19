@@ -33,17 +33,6 @@ public class RocketBombBehavior : IBombBehavior
             gemSR.color = templateSR.color;
         }
 
-        Transform innerTransform = gem.transform.Find(SC_GameLogic.BombInnerSpriteName);
-        if (innerTransform != null)
-        {
-            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
-            if (innerSR != null)
-            {
-                innerSR.sprite = null;
-                innerSR.enabled = false;
-            }
-        }
-
         gem.isMatch = false;
     }
 

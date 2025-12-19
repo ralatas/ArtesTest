@@ -102,15 +102,6 @@ public class GemSpawnService : IGemSpawnService
             gemSR.color = prefabSR.color;
         }
 
-        Transform innerTransform = gemInstance.transform.Find(SC_GameLogic.BombInnerSpriteName);
-        if (innerTransform != null)
-        {
-            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
-            if (innerSR != null)
-            {
-                innerSR.sprite = null;
-                innerSR.enabled = false;
-            }
-        }
+        // No inner sprite cleanup needed; bombs now rely solely on their main sprite.
     }
 }

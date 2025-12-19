@@ -30,19 +30,9 @@ public class AreaBombBehavior : IBombBehavior
             return;
         }
 
-        // Set bomb base sprite and hide any inner color marker to detach from source gem type.
+        // Set bomb base sprite to detach from source gem type.
         gemSR.sprite = bombSR.sprite;
         gemSR.color = bombSR.color;
-        Transform innerTransform = gem.transform.Find(SC_GameLogic.BombInnerSpriteName);
-        if (innerTransform != null)
-        {
-            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
-            if (innerSR != null)
-            {
-                innerSR.sprite = null;
-                innerSR.enabled = false;
-            }
-        }
 
         gem.isMatch = false;
     }
