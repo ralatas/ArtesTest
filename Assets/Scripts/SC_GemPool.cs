@@ -92,6 +92,8 @@ public class SC_GemPool : MonoBehaviour
         gem.isMatch = false;
         gem.bombType = GlobalEnums.BombType.None;
         gem.rocketDirection = GlobalEnums.RocketDirection.None;
+        gem.discoHasTarget = false;
+        gem.discoTargetType = GlobalEnums.GemType.bomb;
 
         // Reset position off-board so it doesn't interfere
         gem.transform.position = new Vector3(-10f, -10f, 0f);

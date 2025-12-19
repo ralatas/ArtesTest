@@ -17,6 +17,10 @@ public class SC_Gem : MonoBehaviour
     public GlobalEnums.BombType bombType = GlobalEnums.BombType.None;
     [HideInInspector]
     public GlobalEnums.RocketDirection rocketDirection = GlobalEnums.RocketDirection.None;
+    [HideInInspector]
+    public GlobalEnums.GemType discoTargetType;
+    [HideInInspector]
+    public bool discoHasTarget = false;
 
     public bool IsBomb => bombType != GlobalEnums.BombType.None;
 

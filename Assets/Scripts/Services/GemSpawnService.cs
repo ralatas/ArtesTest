@@ -44,6 +44,8 @@ public class GemSpawnService : IGemSpawnService
         gemInstance.bombType = GlobalEnums.BombType.None;
         gemInstance.rocketDirection = GlobalEnums.RocketDirection.None;
         gemInstance.baseType = gemInstance.type;
+        gemInstance.discoHasTarget = false;
+        gemInstance.discoTargetType = GlobalEnums.GemType.bomb;
 
         ResetVisualsFromTemplate(gemInstance);
 

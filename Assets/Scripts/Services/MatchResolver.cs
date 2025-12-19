@@ -7,6 +7,7 @@ public class MatchResolver : IMatchResolver
     private readonly SC_GameLogic gameLogic;
     private readonly GameBoard gameBoard;
     private readonly AreaBombBehavior areaBombBehavior = new AreaBombBehavior();
+    private readonly DiscoBallBehavior discoBallBehavior = new DiscoBallBehavior();
     private readonly RocketBombBehavior rocketBombBehavior = new RocketBombBehavior();
 
     public MatchResolver(SC_GameLogic gameLogic, GameBoard gameBoard)
@@ -179,9 +180,13 @@ public class MatchResolver : IMatchResolver
                     continue;
 
                 GlobalEnums.RocketDirection rocketDir = DetermineLineDirection(group);
-                bool createRocket = group.Count == 4 && rocketDir != GlobalEnums.RocketDirection.None;
+                bool isLine = rocketDir != GlobalEnums.RocketDirection.None;
+                bool createDisco = group.Count >= 5 && isLine;
+                bool createRocket = group.Count == 4 && isLine;
 
-                if (createRocket)
+                if (createDisco)
+                    discoBallBehavior.MakeBomb(candidate);
+                else if (createRocket)
                     rocketBombBehavior.MakeBomb(candidate, rocketDir);
                 else
                     areaBombBehavior.MakeBomb(candidate);

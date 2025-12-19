@@ -14,5 +14,4 @@ public interface IBombBehavior
     /// Returns all gems affected by the bomb.
     /// </summary>
     IEnumerable<SC_Gem> GetExplosionTargets(SC_Gem bomb, GameBoard board);
-
 }

@@ -34,6 +34,10 @@ public class Match3Installer : MonoInstaller
             .To<AreaBombBehavior>()
             .AsTransient();
 
+        Container.Bind<IBombBehavior>()
+            .To<DiscoBallBehavior>()
+            .AsTransient();
+
         Container.Bind<IScoreService>()
             .To<ScoreService>()
             .AsSingle();

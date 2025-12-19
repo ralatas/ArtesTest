@@ -95,6 +95,8 @@ public class InputService : IInputService
         gameBoard.SetGem(gem.posIndex.x, gem.posIndex.y, gem);
         gameBoard.SetGem(otherGem.posIndex.x, otherGem.posIndex.y, otherGem);
 
+        SetDiscoTargetsIfNeeded(gem, otherGem);
+
         // Remember last swap (for bomb creation etc.)
         gameLogic.RegisterSwap(gem, otherGem);
 
@@ -124,6 +126,21 @@ public class InputService : IInputService
 
         if (otherGem != null && otherGem.IsBomb)
             gameLogic.TriggerBomb(otherGem);
+    }
+
+    private void SetDiscoTargetsIfNeeded(SC_Gem gem, SC_Gem otherGem)
+    {
+        if (gem != null && gem.bombType == GlobalEnums.BombType.DiscoBall && otherGem != null && !otherGem.IsBomb)
+        {
+            gem.discoHasTarget = true;
+            gem.discoTargetType = otherGem.baseType;
+        }
+
+        if (otherGem != null && otherGem.bombType == GlobalEnums.BombType.DiscoBall && gem != null && !gem.IsBomb)
+        {
+            otherGem.discoHasTarget = true;
+            otherGem.discoTargetType = gem.baseType;
+        }
     }
 
     private IEnumerator CheckMoveCo(SC_Gem gem, SC_Gem otherGem, Vector2Int previousPos)

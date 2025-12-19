@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public class RocketBombBehavior : IBombBehavior
 {
-    public void MakeBomb(SC_Gem gem, GlobalEnums.RocketDirection direction)
+    public void MakeBomb(SC_Gem gem, GlobalEnums.RocketDirection direction = GlobalEnums.RocketDirection.None)
     {
         if (gem == null || (direction != GlobalEnums.RocketDirection.Vertical && direction != GlobalEnums.RocketDirection.Horizontal))
             return;
