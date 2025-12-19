@@ -184,7 +184,7 @@ public class MatchResolver : IMatchResolver
                 if (createRocket)
                     rocketBombBehavior.MakeBomb(candidate, rocketDir);
                 else
-                    areaBombBehavior.MakeBomb(candidate, GlobalEnums.RocketDirection.None);
+                    areaBombBehavior.MakeBomb(candidate);
 
                 // This gem should not be destroyed as part of normal match resolution
                 currentMatches.Remove(candidate);

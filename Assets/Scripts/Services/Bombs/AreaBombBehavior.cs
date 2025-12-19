@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 public class AreaBombBehavior : IBombBehavior
 {
-    public void MakeBomb(SC_Gem gem, GlobalEnums.RocketDirection direction)
+    public void MakeBomb(SC_Gem gem)
     {
         if (gem == null)
             return;
