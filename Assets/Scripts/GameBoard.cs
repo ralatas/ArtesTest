@@ -47,7 +47,7 @@ public class GameBoard
             return false;
 
         // Bombs never participate in color matches
-        if (gemToCheck.isBomb)
+        if (gemToCheck.IsBomb)
             return false;
 
         int x = positionToCheck.x;
@@ -97,7 +97,7 @@ public class GameBoard
                 SC_Gem currentGem = allGems[x, y];
                 if (currentGem != null)
                 {
-                    if (currentGem.isBomb)
+                    if (currentGem.IsBomb)
                         continue;
                 }
                 if (currentGem != null)
@@ -184,4 +184,3 @@ public class GameBoard
         new [] { new Vector2Int(0, +1), new Vector2Int(0, +2) },
     };
 }
-

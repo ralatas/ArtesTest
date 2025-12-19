@@ -14,11 +14,11 @@ public class SC_Gem : MonoBehaviour
     public GlobalEnums.GemType baseType; // the group color used for matching (for regular gems: same as type).
 
     [HideInInspector]
-    public bool isBomb = false;
-    [HideInInspector]
-    public bool isRocket = false;
+    public GlobalEnums.BombType bombType = GlobalEnums.BombType.None;
     [HideInInspector]
     public GlobalEnums.RocketDirection rocketDirection = GlobalEnums.RocketDirection.None;
+
+    public bool IsBomb => bombType != GlobalEnums.BombType.None;
 
     private Vector2 firstTouchPosition;
     private Vector2 finalTouchPosition;
@@ -84,7 +84,7 @@ public class SC_Gem : MonoBehaviour
             return;
 
         // Tap-to-explode for bombs (no swipe)
-        if (isBomb)
+        if (IsBomb)
         {
             Vector2 releasePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             float dx = Mathf.Abs(releasePos.x - firstTouchPosition.x);

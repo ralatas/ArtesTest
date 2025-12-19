@@ -131,8 +131,7 @@ public class SC_GameLogic : MonoBehaviour
             gemInstance.blastSize = prefab.blastSize;
         }
 
-        gemInstance.isBomb = false;
-        gemInstance.isRocket = false;
+        gemInstance.bombType = GlobalEnums.BombType.None;
         gemInstance.rocketDirection = GlobalEnums.RocketDirection.None;
         gemInstance.baseType = gemInstance.type;
 
@@ -196,7 +195,7 @@ public class SC_GameLogic : MonoBehaviour
 
     public void TriggerBomb(SC_Gem bomb)
     {
-        if (bomb == null || !bomb.isBomb)
+        if (bomb == null || !bomb.IsBomb)
             return;
 
         // Royal Match-like behavior: bomb can be activated only when the board is ready for input.
@@ -229,7 +228,7 @@ public class SC_GameLogic : MonoBehaviour
 
                 destroySet.Add(target);
 
-                if (target.isBomb && !visitedBombs.Contains(target))
+                if (target.IsBomb && !visitedBombs.Contains(target))
                 {
                     visitedBombs.Add(target);
                     bombsQueue.Enqueue(target);

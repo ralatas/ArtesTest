@@ -15,8 +15,7 @@ public class AreaBombBehavior : IBombBehavior
 
         gem.type = GlobalEnums.GemType.bomb;
         gem.baseType = GlobalEnums.GemType.bomb;
-        gem.isBomb = true;
-        gem.isRocket = false;
+        gem.bombType = GlobalEnums.BombType.Area;
         gem.rocketDirection = GlobalEnums.RocketDirection.None;
         gem.blastSize = bombTemplate.blastSize;
         gem.destroyEffect = bombTemplate.destroyEffect;
@@ -51,7 +50,7 @@ public class AreaBombBehavior : IBombBehavior
     public bool CanHandle(SC_Gem bomb)
     {
         // Fallback handler for any non-rocket bomb type.
-        return bomb != null && !bomb.isRocket;
+        return bomb != null && bomb.bombType == GlobalEnums.BombType.Area;
     }
 
     public IEnumerable<SC_Gem> GetExplosionTargets(SC_Gem bomb, GameBoard board)

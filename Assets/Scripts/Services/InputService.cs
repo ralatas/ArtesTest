@@ -97,7 +97,7 @@ public class InputService : IInputService
         gameLogic.RegisterSwap(gem, otherGem);
 
         // If a bomb was swapped, activate it at the new position instead of normal match validation.
-        if (gem.isBomb || otherGem.isBomb)
+        if (gem.IsBomb || otherGem.IsBomb)
         {
             gameLogic.StartCoroutine(TriggerBombAfterSwapCo(gem, otherGem));
             return;
@@ -117,10 +117,10 @@ public class InputService : IInputService
         while (!IsSettled(gem) || !IsSettled(otherGem))
             yield return null;
 
-        if (gem != null && gem.isBomb)
+        if (gem != null && gem.IsBomb)
             gameLogic.TriggerBomb(gem);
 
-        if (otherGem != null && otherGem.isBomb)
+        if (otherGem != null && otherGem.IsBomb)
             gameLogic.TriggerBomb(otherGem);
     }
 

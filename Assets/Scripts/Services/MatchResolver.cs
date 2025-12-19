@@ -33,7 +33,7 @@ public class MatchResolver : IMatchResolver
         // 3) Destroy only regular matched gems; bombs will explode later.
         foreach (SC_Gem gem in matches)
         {
-            if (gem != null && gem.isMatch && !gem.isBomb)
+            if (gem != null && gem.isMatch && !gem.IsBomb)
                 DestroyMatchedGemsAt(gem.posIndex);
         }
 
@@ -73,7 +73,7 @@ public class MatchResolver : IMatchResolver
         if (curGem == null)
             return;
 
-        if (curGem.isBomb && !allowBombDestroy)
+        if (curGem.IsBomb && !allowBombDestroy)
             return;
 
         ScoreCheck(curGem);
@@ -175,7 +175,7 @@ public class MatchResolver : IMatchResolver
                     candidate = group[0];
 
                 // Skip if it is already a bomb
-                if (candidate.isBomb)
+                if (candidate.IsBomb)
                     continue;
 
                 GlobalEnums.RocketDirection rocketDir = DetermineLineDirection(group);

@@ -18,8 +18,7 @@ public class RocketBombBehavior : IBombBehavior
 
         gem.type = GlobalEnums.GemType.bomb;
         gem.baseType = GlobalEnums.GemType.bomb;
-        gem.isBomb = true;
-        gem.isRocket = true;
+        gem.bombType = GlobalEnums.BombType.Rocket;
         gem.rocketDirection = direction;
         if (rocketTemplate != null)
         {
@@ -50,7 +49,9 @@ public class RocketBombBehavior : IBombBehavior
 
     public bool CanHandle(SC_Gem bomb)
     {
-        return bomb != null && bomb.isRocket && bomb.rocketDirection != GlobalEnums.RocketDirection.None;
+        return bomb != null
+            && bomb.bombType == GlobalEnums.BombType.Rocket
+            && bomb.rocketDirection != GlobalEnums.RocketDirection.None;
     }
 
     public IEnumerable<SC_Gem> GetExplosionTargets(SC_Gem bomb, GameBoard board)

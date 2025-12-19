@@ -90,8 +90,7 @@ public class SC_GemPool : MonoBehaviour
         }
 
         gem.isMatch = false;
-        gem.isBomb = false;
-        gem.isRocket = false;
+        gem.bombType = GlobalEnums.BombType.None;
         gem.rocketDirection = GlobalEnums.RocketDirection.None;
 
         // Reset position off-board so it doesn't interfere
