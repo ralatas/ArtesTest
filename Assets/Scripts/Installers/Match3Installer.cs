@@ -18,7 +18,6 @@ public class Match3Installer : MonoInstaller
                 SC_GameVariables.Instance.rowsSize
             );
 
-        // Services
         Container.Bind<IBombService>()
             .To<BombService>()
             .AsSingle();

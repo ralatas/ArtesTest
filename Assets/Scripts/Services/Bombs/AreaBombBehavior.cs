@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// Default bomb that clears neighbors plus a small cross.
 /// </summary>
-public class AreaBombBehavior : IBombBehavior, IBombCreationBehavior
+public class AreaBombBehavior : IBombBehavior
 {
     public void MakeBomb(SC_Gem gem, GlobalEnums.RocketDirection direction)
     {

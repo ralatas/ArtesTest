@@ -6,13 +6,13 @@ public class MatchResolver : IMatchResolver
 {
     private readonly SC_GameLogic gameLogic;
     private readonly GameBoard gameBoard;
-    private readonly IBombService bombService;
+    private readonly AreaBombBehavior areaBombBehavior = new AreaBombBehavior();
+    private readonly RocketBombBehavior rocketBombBehavior = new RocketBombBehavior();
 
-    public MatchResolver(SC_GameLogic gameLogic, GameBoard gameBoard, IBombService bombService)
+    public MatchResolver(SC_GameLogic gameLogic, GameBoard gameBoard)
     {
         this.gameLogic = gameLogic;
         this.gameBoard = gameBoard;
-        this.bombService = bombService;
     }
 
     /// <summary>
@@ -182,9 +182,9 @@ public class MatchResolver : IMatchResolver
                 bool createRocket = group.Count == 4 && rocketDir != GlobalEnums.RocketDirection.None;
 
                 if (createRocket)
-                    bombService.MakeBomb(candidate, rocketDir);
+                    rocketBombBehavior.MakeBomb(candidate, rocketDir);
                 else
-                    bombService.MakeBomb(candidate, GlobalEnums.RocketDirection.None);
+                    areaBombBehavior.MakeBomb(candidate, GlobalEnums.RocketDirection.None);
 
                 // This gem should not be destroyed as part of normal match resolution
                 currentMatches.Remove(candidate);

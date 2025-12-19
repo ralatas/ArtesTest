@@ -2,26 +2,30 @@ using System.Collections.Generic;
 
 public class BombService : IBombService
 {
-    private readonly List<IBombBehavior> behaviors;
-    private readonly List<IBombCreationBehavior> creationBehaviors;
+    private readonly Dictionary<System.Type, IBombBehavior> behaviors;
 
     public BombService(IEnumerable<IBombBehavior> behaviors)
     {
-        this.behaviors = behaviors != null ? new List<IBombBehavior>(behaviors) : new List<IBombBehavior>();
+        this.behaviors = new Dictionary<System.Type, IBombBehavior>();
 
-        // Ensure we always have a default set of behaviors to fall back on.
-        if (this.behaviors.Count == 0)
+        if (behaviors != null)
         {
-            this.behaviors.Add(new RocketBombBehavior());
-            this.behaviors.Add(new AreaBombBehavior());
+            foreach (var behavior in behaviors)
+            {
+                if (behavior == null)
+                    continue;
+
+                var key = behavior.GetType();
+                if (!this.behaviors.ContainsKey(key))
+                    this.behaviors.Add(key, behavior);
+            }
         }
 
-        creationBehaviors = new List<IBombCreationBehavior>();
-        foreach (var behavior in this.behaviors)
-        {
-            if (behavior is IBombCreationBehavior creationBehavior)
-                creationBehaviors.Add(creationBehavior);
-        }
+        // Ensure defaults exist.
+        if (!this.behaviors.ContainsKey(typeof(RocketBombBehavior)))
+            this.behaviors[typeof(RocketBombBehavior)] = new RocketBombBehavior();
+        if (!this.behaviors.ContainsKey(typeof(AreaBombBehavior)))
+            this.behaviors[typeof(AreaBombBehavior)] = new AreaBombBehavior();
     }
 
     public IEnumerable<SC_Gem> GetExplosionTargets(SC_Gem bomb, GameBoard board)
@@ -29,7 +33,7 @@ public class BombService : IBombService
         if (bomb == null || board == null)
             yield break;
 
-        foreach (var behavior in behaviors)
+        foreach (var behavior in behaviors.Values)
         {
             if (!behavior.CanHandle(bomb))
                 continue;
@@ -37,45 +41,7 @@ public class BombService : IBombService
             foreach (var target in behavior.GetExplosionTargets(bomb, board))
                 yield return target;
 
-            // We stop after the first matching behavior.
             yield break;
         }
-    }
-
-    public void MakeBomb(SC_Gem gem, GlobalEnums.RocketDirection direction)
-    {
-        if (gem == null)
-            return;
-
-        IBombCreationBehavior creator = null;
-
-        if (direction == GlobalEnums.RocketDirection.None)
-        {
-            foreach (var creation in creationBehaviors)
-            {
-                if (creation is AreaBombBehavior)
-                {
-                    creator = creation;
-                    break;
-                }
-            }
-        }
-        else
-        {
-            foreach (var creation in creationBehaviors)
-            {
-                if (creation is RocketBombBehavior)
-                {
-                    creator = creation;
-                    break;
-                }
-            }
-        }
-
-        // Fallbacks if no matching behavior was bound.
-        if (creator == null)
-            creator = direction == GlobalEnums.RocketDirection.None ? new AreaBombBehavior() : (IBombCreationBehavior)new RocketBombBehavior();
-
-        creator.MakeBomb(gem, direction);
     }
 }

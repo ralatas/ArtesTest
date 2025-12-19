@@ -5,7 +5,7 @@ using UnityEngine;
 /// Clears an entire row or column depending on rocket orientation.
 /// Also responsible for configuring a gem into a rocket bomb.
 /// </summary>
-public class RocketBombBehavior : IBombBehavior, IBombCreationBehavior
+public class RocketBombBehavior : IBombBehavior
 {
     public void MakeBomb(SC_Gem gem, GlobalEnums.RocketDirection direction)
     {
