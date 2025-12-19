@@ -3,6 +3,7 @@ using System.Collections.Generic;
 public class BombService : IBombService
 {
     private readonly List<IBombBehavior> behaviors;
+    private readonly List<IBombCreationBehavior> creationBehaviors;
 
     public BombService(IEnumerable<IBombBehavior> behaviors)
     {
@@ -13,6 +14,13 @@ public class BombService : IBombService
         {
             this.behaviors.Add(new RocketBombBehavior());
             this.behaviors.Add(new AreaBombBehavior());
+        }
+
+        creationBehaviors = new List<IBombCreationBehavior>();
+        foreach (var behavior in this.behaviors)
+        {
+            if (behavior is IBombCreationBehavior creationBehavior)
+                creationBehaviors.Add(creationBehavior);
         }
     }
 
@@ -32,5 +40,42 @@ public class BombService : IBombService
             // We stop after the first matching behavior.
             yield break;
         }
+    }
+
+    public void MakeBomb(SC_Gem gem, GlobalEnums.RocketDirection direction)
+    {
+        if (gem == null)
+            return;
+
+        IBombCreationBehavior creator = null;
+
+        if (direction == GlobalEnums.RocketDirection.None)
+        {
+            foreach (var creation in creationBehaviors)
+            {
+                if (creation is AreaBombBehavior)
+                {
+                    creator = creation;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            foreach (var creation in creationBehaviors)
+            {
+                if (creation is RocketBombBehavior)
+                {
+                    creator = creation;
+                    break;
+                }
+            }
+        }
+
+        // Fallbacks if no matching behavior was bound.
+        if (creator == null)
+            creator = direction == GlobalEnums.RocketDirection.None ? new AreaBombBehavior() : (IBombCreationBehavior)new RocketBombBehavior();
+
+        creator.MakeBomb(gem, direction);
     }
 }

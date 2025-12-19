@@ -139,50 +139,6 @@ public class MatchResolver : IMatchResolver
         return result;
     }
 
-    private void MakeGemBomb(SC_Gem gem)
-    {
-        if (gem == null) return;
-
-        SC_Gem bombTemplate = SC_GameVariables.Instance.bomb;
-
-        gem.type = GlobalEnums.GemType.bomb;
-        gem.baseType = GlobalEnums.GemType.bomb;
-        gem.type = GlobalEnums.GemType.bomb;
-        gem.baseType = GlobalEnums.GemType.bomb;
-        gem.isBomb = true;
-        gem.isRocket = false;
-        gem.rocketDirection = GlobalEnums.RocketDirection.None;
-        gem.blastSize = bombTemplate.blastSize;
-        gem.destroyEffect = bombTemplate.destroyEffect;
-        gem.scoreValue = bombTemplate.scoreValue;
-
-        var bombSR = bombTemplate.GetComponent<SpriteRenderer>();
-        var gemSR = gem.GetComponent<SpriteRenderer>();
-        if (gemSR == null || bombSR == null)
-        {
-            // Fallback: just mark as bomb without visual if something is missing
-            gem.isMatch = false;
-            return;
-        }
-
-        // Set bomb base sprite and hide any inner color marker to detach from source gem type.
-        gemSR.sprite = bombSR.sprite;
-        gemSR.color = bombSR.color;
-        Transform innerTransform = gem.transform.Find(SC_GameLogic.BombInnerSpriteName);
-        if (innerTransform != null)
-        {
-            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
-            if (innerSR != null)
-            {
-                innerSR.sprite = null;
-                innerSR.enabled = false;
-            }
-        }
-
-        // Keep baseType as match color; just clear match flag for this turn
-        gem.isMatch = false;
-    }
-
     /// <summary>
     /// Creates exactly one bomb from the current matches
     /// if there is any connected group of 4+ gems of the same baseType.
@@ -226,9 +182,9 @@ public class MatchResolver : IMatchResolver
                 bool createRocket = group.Count == 4 && rocketDir != GlobalEnums.RocketDirection.None;
 
                 if (createRocket)
-                    MakeGemRocket(candidate, rocketDir);
+                    bombService.MakeBomb(candidate, rocketDir);
                 else
-                    MakeGemBomb(candidate);
+                    bombService.MakeBomb(candidate, GlobalEnums.RocketDirection.None);
 
                 // This gem should not be destroyed as part of normal match resolution
                 currentMatches.Remove(candidate);
@@ -258,54 +214,5 @@ public class MatchResolver : IMatchResolver
         if (sameY) return GlobalEnums.RocketDirection.Vertical;   // horizontal match -> vertical blast
         if (sameX) return GlobalEnums.RocketDirection.Horizontal; // vertical match   -> horizontal blast
         return GlobalEnums.RocketDirection.None;
-    }
-
-    private SC_Gem GetRocketTemplate(GlobalEnums.RocketDirection direction)
-    {
-        if (direction == GlobalEnums.RocketDirection.Vertical && SC_GameVariables.Instance.rocketVertical != null)
-            return SC_GameVariables.Instance.rocketVertical;
-        if (direction == GlobalEnums.RocketDirection.Horizontal && SC_GameVariables.Instance.rocketHorizontal != null)
-            return SC_GameVariables.Instance.rocketHorizontal;
-        return SC_GameVariables.Instance.bomb; // fallback
-    }
-
-    private void MakeGemRocket(SC_Gem gem, GlobalEnums.RocketDirection direction)
-    {
-        if (gem == null) return;
-
-        SC_Gem rocketTemplate = GetRocketTemplate(direction);
-        var templateSR = rocketTemplate != null ? rocketTemplate.GetComponent<SpriteRenderer>() : null;
-        var gemSR = gem.GetComponent<SpriteRenderer>();
-
-        gem.type = GlobalEnums.GemType.bomb;
-        gem.baseType = GlobalEnums.GemType.bomb;
-        gem.isBomb = true;
-        gem.isRocket = true;
-        gem.rocketDirection = direction;
-        if (rocketTemplate != null)
-        {
-            gem.blastSize = rocketTemplate.blastSize;
-            gem.destroyEffect = rocketTemplate.destroyEffect;
-            gem.scoreValue = rocketTemplate.scoreValue;
-        }
-
-        if (gemSR != null && templateSR != null)
-        {
-            gemSR.sprite = templateSR.sprite;
-            gemSR.color = templateSR.color;
-        }
-
-        Transform innerTransform = gem.transform.Find(SC_GameLogic.BombInnerSpriteName);
-        if (innerTransform != null)
-        {
-            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
-            if (innerSR != null)
-            {
-                innerSR.sprite = null;
-                innerSR.enabled = false;
-            }
-        }
-
-        gem.isMatch = false;
     }
 }

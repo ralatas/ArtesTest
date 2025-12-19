@@ -4,8 +4,50 @@ using UnityEngine;
 /// <summary>
 /// Default bomb that clears neighbors plus a small cross.
 /// </summary>
-public class AreaBombBehavior : IBombBehavior
+public class AreaBombBehavior : IBombBehavior, IBombCreationBehavior
 {
+    public void MakeBomb(SC_Gem gem, GlobalEnums.RocketDirection direction)
+    {
+        if (gem == null)
+            return;
+
+        SC_Gem bombTemplate = SC_GameVariables.Instance.bomb;
+
+        gem.type = GlobalEnums.GemType.bomb;
+        gem.baseType = GlobalEnums.GemType.bomb;
+        gem.isBomb = true;
+        gem.isRocket = false;
+        gem.rocketDirection = GlobalEnums.RocketDirection.None;
+        gem.blastSize = bombTemplate.blastSize;
+        gem.destroyEffect = bombTemplate.destroyEffect;
+        gem.scoreValue = bombTemplate.scoreValue;
+
+        var bombSR = bombTemplate.GetComponent<SpriteRenderer>();
+        var gemSR = gem.GetComponent<SpriteRenderer>();
+        if (gemSR == null || bombSR == null)
+        {
+            // Fallback: just mark as bomb without visual if something is missing
+            gem.isMatch = false;
+            return;
+        }
+
+        // Set bomb base sprite and hide any inner color marker to detach from source gem type.
+        gemSR.sprite = bombSR.sprite;
+        gemSR.color = bombSR.color;
+        Transform innerTransform = gem.transform.Find(SC_GameLogic.BombInnerSpriteName);
+        if (innerTransform != null)
+        {
+            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
+            if (innerSR != null)
+            {
+                innerSR.sprite = null;
+                innerSR.enabled = false;
+            }
+        }
+
+        gem.isMatch = false;
+    }
+
     public bool CanHandle(SC_Gem bomb)
     {
         // Fallback handler for any non-rocket bomb type.

@@ -1,10 +1,53 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// Clears an entire row or column depending on rocket orientation.
+/// Also responsible for configuring a gem into a rocket bomb.
 /// </summary>
-public class RocketBombBehavior : IBombBehavior
+public class RocketBombBehavior : IBombBehavior, IBombCreationBehavior
 {
+    public void MakeBomb(SC_Gem gem, GlobalEnums.RocketDirection direction)
+    {
+        if (gem == null || (direction != GlobalEnums.RocketDirection.Vertical && direction != GlobalEnums.RocketDirection.Horizontal))
+            return;
+
+        SC_Gem rocketTemplate = GetRocketTemplate(direction);
+        var templateSR = rocketTemplate != null ? rocketTemplate.GetComponent<SpriteRenderer>() : null;
+        var gemSR = gem.GetComponent<SpriteRenderer>();
+
+        gem.type = GlobalEnums.GemType.bomb;
+        gem.baseType = GlobalEnums.GemType.bomb;
+        gem.isBomb = true;
+        gem.isRocket = true;
+        gem.rocketDirection = direction;
+        if (rocketTemplate != null)
+        {
+            gem.blastSize = rocketTemplate.blastSize;
+            gem.destroyEffect = rocketTemplate.destroyEffect;
+            gem.scoreValue = rocketTemplate.scoreValue;
+        }
+
+        if (gemSR != null && templateSR != null)
+        {
+            gemSR.sprite = templateSR.sprite;
+            gemSR.color = templateSR.color;
+        }
+
+        Transform innerTransform = gem.transform.Find(SC_GameLogic.BombInnerSpriteName);
+        if (innerTransform != null)
+        {
+            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
+            if (innerSR != null)
+            {
+                innerSR.sprite = null;
+                innerSR.enabled = false;
+            }
+        }
+
+        gem.isMatch = false;
+    }
+
     public bool CanHandle(SC_Gem bomb)
     {
         return bomb != null && bomb.isRocket && bomb.rocketDirection != GlobalEnums.RocketDirection.None;
@@ -35,5 +78,14 @@ public class RocketBombBehavior : IBombBehavior
                     yield return g;
             }
         }
+    }
+
+    private SC_Gem GetRocketTemplate(GlobalEnums.RocketDirection direction)
+    {
+        if (direction == GlobalEnums.RocketDirection.Vertical && SC_GameVariables.Instance.rocketVertical != null)
+            return SC_GameVariables.Instance.rocketVertical;
+        if (direction == GlobalEnums.RocketDirection.Horizontal && SC_GameVariables.Instance.rocketHorizontal != null)
+            return SC_GameVariables.Instance.rocketHorizontal;
+        return SC_GameVariables.Instance.bomb;
     }
 }
