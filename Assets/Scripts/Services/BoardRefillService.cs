@@ -9,11 +9,13 @@ using UnityEngine;
 public class BoardRefillService : IBoardRefillService
 {
     private readonly GameBoard gameBoard;
+    private readonly IGemSpawnService gemSpawnService;
     private readonly SC_GameLogic gameLogic;
 
-    public BoardRefillService(GameBoard gameBoard, SC_GameLogic gameLogic)
+    public BoardRefillService(GameBoard gameBoard, IGemSpawnService gemSpawnService, SC_GameLogic gameLogic)
     {
         this.gameBoard = gameBoard;
+        this.gemSpawnService = gemSpawnService;
         this.gameLogic = gameLogic;
     }
 
@@ -85,7 +87,8 @@ public class BoardRefillService : IBoardRefillService
                 Vector2Int pos = new Vector2Int(x, y);
                 int gemIndex = PickGemIndexWithoutMatch(pos);
 
-                gameLogic.SpawnGem(pos, SC_GameVariables.Instance.gems[gemIndex]);
+                Transform parent = gameLogic.GemsHolder;
+                gemSpawnService.SpawnGem(pos, SC_GameVariables.Instance.gems[gemIndex], gameLogic, parent);
 
                 if (spawnDelay > 0f)
                     yield return new WaitForSeconds(spawnDelay);

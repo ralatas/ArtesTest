@@ -6,11 +6,13 @@ using Zenject;
 
 public class SC_GameLogic : MonoBehaviour
 {
-    private Dictionary<string, GameObject> unityObjects;
+    [SerializeField] private Transform gemsHolder;
+    [SerializeField] private TextMeshProUGUI scoreText;
     private float displayScore = 0;
     private GameBoard gameBoard;
     private IBombService bombService;
     private IScoreService scoreService;
+    private IGemSpawnService gemSpawnService;
     private IBoardRefillService boardRefillService;
     private IInputService inputService;
     private IMatchResolver matchResolver;
@@ -23,6 +25,8 @@ public class SC_GameLogic : MonoBehaviour
     public IInputService InputService => inputService;
     public SC_Gem LastMovedGemA => lastMovedGemA;
     public SC_Gem LastMovedGemB => lastMovedGemB;
+    public Transform GemsHolder => gemsHolder;
+    public TextMeshProUGUI ScoreText => scoreText;
 
     public const string BombInnerSpriteName = "BombInnerSprite";
 
@@ -31,6 +35,7 @@ public class SC_GameLogic : MonoBehaviour
         GameBoard gameBoard,
         IBombService bombService,
         IScoreService scoreService,
+        IGemSpawnService gemSpawnService,
         IBoardRefillService boardRefillService,
         IInputService inputService,
         IMatchResolver matchResolver)
@@ -38,6 +43,7 @@ public class SC_GameLogic : MonoBehaviour
         this.gameBoard = gameBoard;
         this.bombService = bombService;
         this.scoreService = scoreService;
+        this.gemSpawnService = gemSpawnService;
         this.boardRefillService = boardRefillService;
         this.inputService = inputService;
         this.matchResolver = matchResolver;
@@ -54,112 +60,20 @@ public class SC_GameLogic : MonoBehaviour
     {
         float targetScore = scoreService != null ? scoreService.Score : gameBoard.Score;
         displayScore = Mathf.Lerp(displayScore, targetScore, SC_GameVariables.Instance.scoreSpeed * Time.deltaTime);
-        unityObjects["Txt_Score"].GetComponent<TextMeshProUGUI>().text = displayScore.ToString("0");
+        ScoreText.text = displayScore.ToString("0");
     }
     #endregion
 
     #region Logic
     private void Init()
     {
-        unityObjects = new Dictionary<string, GameObject>();
-        GameObject[] _obj = GameObject.FindGameObjectsWithTag("UnityObject");
-        foreach (GameObject g in _obj)
-            unityObjects.Add(g.name, g);
-        Setup();
-    }
-
-    private void Setup()
-    {
-        for (int x = 0; x < gameBoard.Width; x++)
-            for (int y = 0; y < gameBoard.Height; y++)
-            {
-                Vector2 _pos = new Vector2(x, y);
-                GameObject _bgTile = Instantiate(SC_GameVariables.Instance.bgTilePrefabs, _pos, Quaternion.identity);
-                _bgTile.transform.SetParent(unityObjects["GemsHolder"].transform);
-                _bgTile.name = "BG Tile - " + x + ", " + y;
-
-                int _gemToUse = Random.Range(0, SC_GameVariables.Instance.gems.Length);
-
-                int iterations = 0;
-                while (gameBoard.MatchesAt(new Vector2Int(x, y), SC_GameVariables.Instance.gems[_gemToUse]) && iterations < 100)
-                {
-                    _gemToUse = Random.Range(0, SC_GameVariables.Instance.gems.Length);
-                    iterations++;
-                }
-                SpawnGem(new Vector2Int(x, y), SC_GameVariables.Instance.gems[_gemToUse]);
-            }
+        gemSpawnService.FillBoard(this, gemsHolder);
     }
 
     public void StartGame()
     {
         int initialScore = scoreService != null ? scoreService.Score : gameBoard.Score;
-        unityObjects["Txt_Score"].GetComponent<TextMeshProUGUI>().text = initialScore.ToString("0");
-    }
-
-    public void SpawnGem(Vector2Int _Position, SC_Gem _GemToSpawn)
-    {
-        SC_Gem gemInstance;
-        if (SC_GemPool.Instance != null)
-        {
-            gemInstance = SC_GemPool.Instance.Get(
-                _GemToSpawn,
-                _Position,
-                this,
-                unityObjects["GemsHolder"].transform
-            );
-        }
-        else
-        {
-            gemInstance = Instantiate(
-                _GemToSpawn,
-                new Vector3(_Position.x, _Position.y + SC_GameVariables.Instance.dropHeight, 0f),
-                Quaternion.identity
-            );
-            gemInstance.transform.SetParent(unityObjects["GemsHolder"].transform);
-            gemInstance.name = "Gem - " + _Position.x + ", " + _Position.y;
-            gemInstance.prefabReference = _GemToSpawn;
-            gemInstance.SetupGem(this, _Position);
-        }
-
-        // Reset bomb state
-        SC_Gem prefab = gemInstance.prefabReference != null ? gemInstance.prefabReference : _GemToSpawn;
-        if (prefab != null)
-        {
-            gemInstance.type = prefab.type;
-            gemInstance.scoreValue = prefab.scoreValue;
-            gemInstance.destroyEffect = prefab.destroyEffect;
-            gemInstance.blastSize = prefab.blastSize;
-        }
-
-        gemInstance.bombType = GlobalEnums.BombType.None;
-        gemInstance.rocketDirection = GlobalEnums.RocketDirection.None;
-        gemInstance.baseType = gemInstance.type;
-
-        // Reset main visual from prefab (in case this was a bomb before)
-        var gemSR = gemInstance.GetComponent<SpriteRenderer>();
-        SpriteRenderer prefabSR = null;
-        if (gemInstance.prefabReference != null)
-            prefabSR = gemInstance.prefabReference.GetComponent<SpriteRenderer>();
-
-        if (gemSR != null && prefabSR != null)
-        {
-            gemSR.sprite = prefabSR.sprite;
-            gemSR.color = prefabSR.color;
-        }
-
-        // Hide/remove inner bomb sprite if it exists
-        Transform innerTransform = gemInstance.transform.Find(BombInnerSpriteName);
-        if (innerTransform != null)
-        {
-            var innerSR = innerTransform.GetComponent<SpriteRenderer>();
-            if (innerSR != null)
-            {
-                innerSR.sprite = null;
-                innerSR.enabled = false;
-            }
-        }
-
-        gameBoard.SetGem(_Position.x, _Position.y, gemInstance);
+        ScoreText.text = initialScore.ToString("0");
     }
 
     public void RegisterSwap(SC_Gem first, SC_Gem second)
