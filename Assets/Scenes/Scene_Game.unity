@@ -993,6 +993,8 @@ MonoBehaviour:
     type: 3}
   rocketVertical: {fileID: 7728721766547317714, guid: 170970c45c2b9408fabe90341b922ddd,
     type: 3}
+  discoBall: {fileID: 7728721766547317714, guid: 3be3af51d533e4332bd75c4482e29ac3,
+    type: 3}
   dropHeight: 1
   gemSpeed: 7
   scoreSpeed: 5
