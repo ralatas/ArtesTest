@@ -166,49 +166,7 @@ public class SC_GameLogic : MonoBehaviour
         StartCascade();
 
         if (helicopterProjectiles.Count > 0)
-            StartCoroutine(HandleHelicopterBlockerAfterCascade(helicopterProjectiles));
-    }
-
-    private IEnumerator HandleHelicopterBlockerAfterCascade(List<GameObject> projectiles)
-    {
-        if (projectiles == null || projectiles.Count == 0)
-            yield break;
-
-        // Wait until cascades/refill finish (state returns to move)
-        while (currentState != GlobalEnums.GameState.move)
-            yield return null;
-
-        foreach (var proj in projectiles)
-        {
-            SC_Gem blocker = helicopterBehavior.FindPriorityBlocker(gameBoard, null);
-            if (blocker == null)
-                continue;
-
-            float speed = Mathf.Max(0.1f, SC_GameVariables.Instance.helicopterSpeed);
-
-            while (proj != null && blocker != null)
-            {
-                Vector3 targetPos = blocker.transform.position;
-                proj.transform.position = Vector3.MoveTowards(proj.transform.position, targetPos, speed * Time.deltaTime);
-                if (Vector3.Distance(proj.transform.position, targetPos) < 0.05f)
-                    break;
-                yield return null;
-            }
-
-            if (proj != null)
-                Destroy(proj);
-
-            if (blocker != null)
-            {
-                var set = new HashSet<SC_Gem> { blocker };
-                yield return StartCoroutine(matchResolver.DestroyGemsCo(set));
-                StartCascade();
-
-                // wait for cascades/refill before next projectile
-                while (currentState != GlobalEnums.GameState.move)
-                    yield return null;
-            }
-        }
+            StartCoroutine(helicopterBehavior.HandleBlockersAfterCascade(helicopterProjectiles, this, gameBoard, matchResolver));
     }
 
     public void StartCascade()

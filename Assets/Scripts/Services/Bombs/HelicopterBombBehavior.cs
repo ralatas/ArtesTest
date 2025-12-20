@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -154,6 +155,48 @@ public class HelicopterBombBehavior : IBombBehavior
         }
 
         return best;
+    }
+
+    public IEnumerator HandleBlockersAfterCascade(List<GameObject> projectiles, SC_GameLogic gameLogic, GameBoard board, IMatchResolver matchResolver)
+    {
+        if (projectiles == null || projectiles.Count == 0 || gameLogic == null || board == null || matchResolver == null)
+            yield break;
+
+        while (gameLogic.CurrentState != GlobalEnums.GameState.move)
+            yield return null;
+
+        foreach (var proj in projectiles)
+        {
+            SC_Gem blocker = FindPriorityBlocker(board, null);
+            if (blocker == null)
+            {
+                if (proj != null) Object.Destroy(proj);
+                continue;
+            }
+
+            float speed = Mathf.Max(0.1f, SC_GameVariables.Instance.helicopterSpeed);
+
+            while (proj != null && blocker != null)
+            {
+                Vector3 targetPos = blocker.transform.position;
+                proj.transform.position = Vector3.MoveTowards(proj.transform.position, targetPos, speed * Time.deltaTime);
+                if (Vector3.Distance(proj.transform.position, targetPos) < 0.05f)
+                    break;
+                yield return null;
+            }
+
+            if (proj != null)
+                Object.Destroy(proj);
+
+            if (blocker != null)
+            {
+                var set = new HashSet<SC_Gem> { blocker };
+                yield return gameLogic.StartCoroutine(matchResolver.DestroyGemsCo(set));
+                gameLogic.StartCascade();
+                while (gameLogic.CurrentState != GlobalEnums.GameState.move)
+                    yield return null;
+            }
+        }
     }
 
     // Lower priority number means better (disco=1, bomb=2, match=3)
