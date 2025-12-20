@@ -99,6 +99,16 @@ public class HelicopterBombBehavior : IBombBehavior
         if (bomb == null || board == null)
             yield break;
 
+        foreach (var target in CrossNeighbors(bomb, board))
+            yield return target;
+
+        SC_Gem blocker = FindPriorityBlocker(board, bomb);
+        if (blocker != null && blocker != bomb)
+            yield return blocker;
+    }
+
+    private IEnumerable<SC_Gem> CrossNeighbors(SC_Gem bomb, GameBoard board)
+    {
         int x = bomb.posIndex.x;
         int y = bomb.posIndex.y;
 
@@ -122,6 +132,84 @@ public class HelicopterBombBehavior : IBombBehavior
             if (target != null)
                 yield return target;
         }
+    }
+
+    private SC_Gem FindPriorityBlocker(GameBoard board, SC_Gem bomb)
+    {
+        SC_Gem best = null;
+        int bestPriority = int.MaxValue;
+
+        for (int x = 0; x < board.Width; x++)
+        {
+            for (int y = 0; y < board.Height; y++)
+            {
+                SC_Gem candidate = board.GetGem(x, y);
+                if (candidate == null || candidate == bomb)
+                    continue;
+
+                int priority = EvaluateRemoval(board, x, y);
+                if (priority > 0 && priority < bestPriority)
+                {
+                    bestPriority = priority;
+                    best = candidate;
+                }
+            }
+        }
+
+        return best;
+    }
+
+    // Lower priority number means better (disco=1, bomb=2, match=3)
+    private int EvaluateRemoval(GameBoard board, int x, int y)
+    {
+        // simulate removing gem at (x,y) and letting the column drop by 1
+        SC_Gem[] column = new SC_Gem[board.Height];
+        for (int i = 0; i < board.Height; i++)
+            column[i] = board.GetGem(x, i);
+
+        for (int i = y; i < board.Height - 1; i++)
+            column[i] = column[i + 1];
+        column[board.Height - 1] = null;
+
+        SC_Gem fallen = column[y];
+        if (fallen == null || fallen.IsBomb)
+            return 0;
+
+        GlobalEnums.GemType type = fallen.baseType;
+
+        int horiz = 1;
+        horiz += CountDirection(board, x, y, -1, 0, type, column);
+        horiz += CountDirection(board, x, y, 1, 0, type, column);
+
+        int vert = 1;
+        vert += CountDirection(board, x, y, 0, -1, type, column);
+        vert += CountDirection(board, x, y, 0, 1, type, column);
+
+        int maxLen = Mathf.Max(horiz, vert);
+        if (maxLen < 3)
+            return 0;
+        if (maxLen >= 5)
+            return 1;
+        if (maxLen == 4)
+            return 2;
+        return 3;
+    }
+
+    private int CountDirection(GameBoard board, int startX, int startY, int dx, int dy, GlobalEnums.GemType type, SC_Gem[] simulatedColumn)
+    {
+        int count = 0;
+        int x = startX + dx;
+        int y = startY + dy;
+        while (x >= 0 && x < board.Width && y >= 0 && y < board.Height)
+        {
+            SC_Gem g = (x == startX) ? simulatedColumn[y] : board.GetGem(x, y);
+            if (g == null || g.IsBomb || g.baseType != type)
+                break;
+            count++;
+            x += dx;
+            y += dy;
+        }
+        return count;
     }
 
     private List<SC_Gem> GetSquareGroup(GameBoard board, int startX, int startY)
