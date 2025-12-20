@@ -102,9 +102,6 @@ public class HelicopterBombBehavior : IBombBehavior
         foreach (var target in CrossNeighbors(bomb, board))
             yield return target;
 
-        SC_Gem blocker = FindPriorityBlocker(board, bomb);
-        if (blocker != null && blocker != bomb)
-            yield return blocker;
     }
 
     private IEnumerable<SC_Gem> CrossNeighbors(SC_Gem bomb, GameBoard board)
@@ -134,7 +131,7 @@ public class HelicopterBombBehavior : IBombBehavior
         }
     }
 
-    private SC_Gem FindPriorityBlocker(GameBoard board, SC_Gem bomb)
+    public SC_Gem FindPriorityBlocker(GameBoard board, SC_Gem bomb)
     {
         SC_Gem best = null;
         int bestPriority = int.MaxValue;

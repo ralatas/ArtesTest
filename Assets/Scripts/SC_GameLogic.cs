@@ -17,6 +17,7 @@ public class SC_GameLogic : MonoBehaviour
     private IInputService inputService;
     private IHintService hintService;
     private IMatchResolver matchResolver;
+    private HelicopterBombBehavior helicopterBehavior = new HelicopterBombBehavior();
 
     private GlobalEnums.GameState currentState = GlobalEnums.GameState.move;
     public GlobalEnums.GameState CurrentState { get { return currentState; } }
@@ -122,6 +123,7 @@ public class SC_GameLogic : MonoBehaviour
         var bombsQueue = new Queue<SC_Gem>();
         var visitedBombs = new HashSet<SC_Gem>();
         var destroySet = new HashSet<SC_Gem>();
+        var helicopterProjectiles = new List<GameObject>();
 
         bombsQueue.Enqueue(startBomb);
         visitedBombs.Add(startBomb);
@@ -130,6 +132,19 @@ public class SC_GameLogic : MonoBehaviour
         {
             SC_Gem bomb = bombsQueue.Dequeue();
             destroySet.Add(bomb);
+            if (bomb != null && bomb.bombType == GlobalEnums.BombType.Helicopter)
+            {
+                var projPrefab = SC_GameVariables.Instance.helicopterProjectile;
+                if (projPrefab != null)
+                {
+                    var proj = Instantiate(projPrefab, bomb.transform.position, Quaternion.identity);
+                    helicopterProjectiles.Add(proj);
+                }
+                else
+                {
+                    helicopterProjectiles.Add(null);
+                }
+            }
 
             foreach (var target in bombService.GetExplosionTargets(bomb, gameBoard))
             {
@@ -149,6 +164,51 @@ public class SC_GameLogic : MonoBehaviour
         // Destroy affected gems (including bombs) and then cascade.
         yield return StartCoroutine(matchResolver.DestroyGemsCo(destroySet));
         StartCascade();
+
+        if (helicopterProjectiles.Count > 0)
+            StartCoroutine(HandleHelicopterBlockerAfterCascade(helicopterProjectiles));
+    }
+
+    private IEnumerator HandleHelicopterBlockerAfterCascade(List<GameObject> projectiles)
+    {
+        if (projectiles == null || projectiles.Count == 0)
+            yield break;
+
+        // Wait until cascades/refill finish (state returns to move)
+        while (currentState != GlobalEnums.GameState.move)
+            yield return null;
+
+        foreach (var proj in projectiles)
+        {
+            SC_Gem blocker = helicopterBehavior.FindPriorityBlocker(gameBoard, null);
+            if (blocker == null)
+                continue;
+
+            float speed = Mathf.Max(0.1f, SC_GameVariables.Instance.helicopterSpeed);
+
+            while (proj != null && blocker != null)
+            {
+                Vector3 targetPos = blocker.transform.position;
+                proj.transform.position = Vector3.MoveTowards(proj.transform.position, targetPos, speed * Time.deltaTime);
+                if (Vector3.Distance(proj.transform.position, targetPos) < 0.05f)
+                    break;
+                yield return null;
+            }
+
+            if (proj != null)
+                Destroy(proj);
+
+            if (blocker != null)
+            {
+                var set = new HashSet<SC_Gem> { blocker };
+                yield return StartCoroutine(matchResolver.DestroyGemsCo(set));
+                StartCascade();
+
+                // wait for cascades/refill before next projectile
+                while (currentState != GlobalEnums.GameState.move)
+                    yield return null;
+            }
+        }
     }
 
     public void StartCascade()
