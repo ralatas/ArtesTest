@@ -9,6 +9,7 @@ public class MatchResolver : IMatchResolver
     private readonly AreaBombBehavior areaBombBehavior = new AreaBombBehavior();
     private readonly DiscoBallBehavior discoBallBehavior = new DiscoBallBehavior();
     private readonly RocketBombBehavior rocketBombBehavior = new RocketBombBehavior();
+    private readonly HelicopterBombBehavior helicopterBombBehavior = new HelicopterBombBehavior();
 
     public MatchResolver(SC_GameLogic gameLogic, GameBoard gameBoard)
     {
@@ -29,7 +30,9 @@ public class MatchResolver : IMatchResolver
             yield break;
 
         // 2) Create a bomb from any 4+ match in this wave (including cascades).
-        TryCreateBombInMatches(matches);
+        bool helicopterCreated = TryCreateHelicopterBomb(matches);
+        if (!helicopterCreated)
+            TryCreateBombInMatches(matches);
 
         // 3) Destroy only regular matched gems; bombs will explode later.
         foreach (SC_Gem gem in matches)
@@ -140,6 +143,125 @@ public class MatchResolver : IMatchResolver
         return result;
     }
 
+    private bool TryCreateHelicopterBomb(List<SC_Gem> currentMatches)
+    {
+        if (currentMatches == null || currentMatches.Count == 0)
+            return false;
+
+        HashSet<SC_Gem> matchSet = new HashSet<SC_Gem>(currentMatches);
+
+        for (int x = 0; x < gameBoard.Width - 1; x++)
+        {
+            for (int y = 0; y < gameBoard.Height - 1; y++)
+            {
+                List<SC_Gem> square = GetSquareGroup(x, y);
+                if (square == null || square.Count == 0)
+                    continue;
+
+                if (!square.TrueForAll(matchSet.Contains))
+                    continue;
+
+                GlobalEnums.GemType matchType = GetGemMatchType(square[0]);
+                SC_Gem adjacent = FindAdjacentSameType(square, matchType);
+                if (adjacent != null && !matchSet.Contains(adjacent))
+                {
+                    adjacent.isMatch = true;
+                    currentMatches.Add(adjacent);
+                    gameBoard.CurrentMatches.Add(adjacent);
+                    matchSet.Add(adjacent);
+                }
+
+                List<SC_Gem> fullGroup = new List<SC_Gem>(square);
+                if (adjacent != null)
+                    fullGroup.Add(adjacent);
+
+                SC_Gem candidate = PickBombOrigin(fullGroup);
+                if (candidate == null || candidate.IsBomb)
+                    continue;
+
+                helicopterBombBehavior.MakeBomb(candidate);
+                candidate.isMatch = false;
+
+                currentMatches.Remove(candidate);
+                gameBoard.CurrentMatches.Remove(candidate);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private List<SC_Gem> GetSquareGroup(int startX, int startY)
+    {
+        if (startX < 0 || startY < 0 || startX >= gameBoard.Width - 1 || startY >= gameBoard.Height - 1)
+            return null;
+
+        SC_Gem g00 = gameBoard.GetGem(startX, startY);
+        SC_Gem g10 = gameBoard.GetGem(startX + 1, startY);
+        SC_Gem g01 = gameBoard.GetGem(startX, startY + 1);
+        SC_Gem g11 = gameBoard.GetGem(startX + 1, startY + 1);
+
+        if (g00 == null || g10 == null || g01 == null || g11 == null)
+            return null;
+
+        if (g00.IsBomb || g10.IsBomb || g01.IsBomb || g11.IsBomb)
+            return null;
+
+        GlobalEnums.GemType matchType = GetGemMatchType(g00);
+        if (GetGemMatchType(g10) != matchType || GetGemMatchType(g01) != matchType || GetGemMatchType(g11) != matchType)
+            return null;
+
+        return new List<SC_Gem> { g00, g10, g01, g11 };
+    }
+
+    private SC_Gem FindAdjacentSameType(IEnumerable<SC_Gem> square, GlobalEnums.GemType matchType)
+    {
+        HashSet<SC_Gem> squareSet = new HashSet<SC_Gem>(square);
+        Vector2Int[] dirs =
+        {
+            new Vector2Int(1, 0),
+            new Vector2Int(-1, 0),
+            new Vector2Int(0, 1),
+            new Vector2Int(0, -1)
+        };
+
+        foreach (var gem in square)
+        {
+            Vector2Int pos = gem.posIndex;
+            foreach (var dir in dirs)
+            {
+                int nx = pos.x + dir.x;
+                int ny = pos.y + dir.y;
+
+                if (nx < 0 || ny < 0 || nx >= gameBoard.Width || ny >= gameBoard.Height)
+                    continue;
+
+                SC_Gem neighbor = gameBoard.GetGem(nx, ny);
+                if (neighbor == null || neighbor.IsBomb || squareSet.Contains(neighbor))
+                    continue;
+
+                if (GetGemMatchType(neighbor) == matchType)
+                    return neighbor;
+            }
+        }
+
+        return null;
+    }
+
+    private SC_Gem PickBombOrigin(List<SC_Gem> group)
+    {
+        if (group == null || group.Count == 0)
+            return null;
+
+        if (gameLogic.LastMovedGemA != null && group.Contains(gameLogic.LastMovedGemA))
+            return gameLogic.LastMovedGemA;
+
+        if (gameLogic.LastMovedGemB != null && group.Contains(gameLogic.LastMovedGemB))
+            return gameLogic.LastMovedGemB;
+
+        return group[0];
+    }
+
     /// <summary>
     /// Creates exactly one bomb from the current matches
     /// if there is any connected group of 4+ gems of the same baseType.
@@ -219,5 +341,10 @@ public class MatchResolver : IMatchResolver
         if (sameY) return GlobalEnums.RocketDirection.Vertical;   // horizontal match -> vertical blast
         if (sameX) return GlobalEnums.RocketDirection.Horizontal; // vertical match   -> horizontal blast
         return GlobalEnums.RocketDirection.None;
+    }
+
+    private GlobalEnums.GemType GetGemMatchType(SC_Gem gem)
+    {
+        return gem.baseType != 0 ? gem.baseType : gem.type;
     }
 }

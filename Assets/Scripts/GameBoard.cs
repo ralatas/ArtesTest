@@ -75,6 +75,27 @@ public class GameBoard
                 return true;
         }
 
+        // Square (2x2) match that includes the tested position
+        Vector2Int[] squareOffsets =
+        {
+            new Vector2Int(0, 0),
+            new Vector2Int(-1, 0),
+            new Vector2Int(0, -1),
+            new Vector2Int(-1, -1)
+        };
+
+        foreach (var offset in squareOffsets)
+        {
+            int startX = x + offset.x;
+            int startY = y + offset.y;
+
+            if (startX < 0 || startY < 0 || startX + 1 >= width || startY + 1 >= height)
+                continue;
+
+            if (FormsSquareMatch(startX, startY, positionToCheck, gemToCheck, matchType))
+                return true;
+        }
+
         return false;
     }
 
@@ -146,9 +167,107 @@ public class GameBoard
                 }
             }
 
+        FindSquareMatches();
+
         if (currentMatches.Count > 0)
             currentMatches = currentMatches.Distinct().ToList();
 
+    }
+
+    private void FindSquareMatches()
+    {
+        for (int x = 0; x < width - 1; x++)
+        {
+            for (int y = 0; y < height - 1; y++)
+            {
+                SC_Gem g00 = allGems[x, y];
+                SC_Gem g10 = allGems[x + 1, y];
+                SC_Gem g01 = allGems[x, y + 1];
+                SC_Gem g11 = allGems[x + 1, y + 1];
+
+                if (g00 == null || g10 == null || g01 == null || g11 == null)
+                    continue;
+
+                if (g00.IsBomb || g10.IsBomb || g01.IsBomb || g11.IsBomb)
+                    continue;
+
+                GlobalEnums.GemType matchType = GetMatchType(g00);
+                if (GetMatchType(g10) != matchType || GetMatchType(g01) != matchType || GetMatchType(g11) != matchType)
+                    continue;
+
+                SC_Gem[] square = { g00, g10, g01, g11 };
+                foreach (var gem in square)
+                {
+                    gem.isMatch = true;
+                    currentMatches.Add(gem);
+                }
+
+                SC_Gem adjacent = FindAdjacentSameType(square, matchType);
+                if (adjacent != null)
+                {
+                    adjacent.isMatch = true;
+                    currentMatches.Add(adjacent);
+                }
+            }
+        }
+    }
+
+    private SC_Gem FindAdjacentSameType(IEnumerable<SC_Gem> square, GlobalEnums.GemType matchType)
+    {
+        HashSet<SC_Gem> squareSet = new HashSet<SC_Gem>(square);
+        Vector2Int[] dirs =
+        {
+            new Vector2Int(1, 0),
+            new Vector2Int(-1, 0),
+            new Vector2Int(0, 1),
+            new Vector2Int(0, -1)
+        };
+
+        foreach (var gem in square)
+        {
+            Vector2Int pos = gem.posIndex;
+            foreach (var dir in dirs)
+            {
+                int nx = pos.x + dir.x;
+                int ny = pos.y + dir.y;
+
+                if (nx < 0 || ny < 0 || nx >= width || ny >= height)
+                    continue;
+
+                SC_Gem neighbor = allGems[nx, ny];
+                if (neighbor == null || neighbor.IsBomb || squareSet.Contains(neighbor))
+                    continue;
+
+                if (GetMatchType(neighbor) == matchType)
+                    return neighbor;
+            }
+        }
+
+        return null;
+    }
+
+    private bool FormsSquareMatch(int startX, int startY, Vector2Int testedPos, SC_Gem testedGem, GlobalEnums.GemType matchType)
+    {
+        for (int dx = 0; dx <= 1; dx++)
+        {
+            for (int dy = 0; dy <= 1; dy++)
+            {
+                int cx = startX + dx;
+                int cy = startY + dy;
+
+                SC_Gem g = (testedPos.x == cx && testedPos.y == cy)
+                    ? testedGem
+                    : allGems[cx, cy];
+
+                if (g == null || g.IsBomb)
+                    return false;
+
+                if (GetMatchType(g) != matchType)
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     public void MarkBombArea(Vector2Int bombPos, int _BlastSize)

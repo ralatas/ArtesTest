@@ -28,6 +28,8 @@ public class BombService : IBombService
             this.behaviors[typeof(AreaBombBehavior)] = new AreaBombBehavior();
         if (!this.behaviors.ContainsKey(typeof(DiscoBallBehavior)))
             this.behaviors[typeof(DiscoBallBehavior)] = new DiscoBallBehavior();
+        if (!this.behaviors.ContainsKey(typeof(HelicopterBombBehavior)))
+            this.behaviors[typeof(HelicopterBombBehavior)] = new HelicopterBombBehavior();
     }
 
     public IEnumerable<SC_Gem> GetExplosionTargets(SC_Gem bomb, GameBoard board)

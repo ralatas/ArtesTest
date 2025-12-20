@@ -12,6 +12,7 @@ public class SC_GameVariables : MonoBehaviour
     public SC_Gem rocketHorizontal;
     public SC_Gem rocketVertical;
     public SC_Gem discoBall;
+    public SC_Gem helicopter;
     public int dropHeight = 0;
     public float gemSpeed;
     public float scoreSpeed = 5;
