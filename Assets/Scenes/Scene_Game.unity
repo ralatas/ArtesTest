@@ -282,6 +282,7 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -324,15 +325,15 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0
+    x: 0.0893926
     y: 0
-    width: 1
+    width: 0.8212148
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 47
   orthographic: 1
-  orthographic size: 8
+  orthographic size: 3.5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -357,12 +358,28 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3, y: 6.54, z: -10}
+  m_LocalPosition: {x: 3, y: 3, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b436f1dc4974422a8446013fb6fc5d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  forceLandscape: 1
+  padding: 0.5
+  targetAspectWidth: 16
+  targetAspectHeight: 9
 --- !u!1 &544543387
 GameObject:
   m_ObjectHideFlags: 0
@@ -995,6 +1012,11 @@ MonoBehaviour:
     type: 3}
   discoBall: {fileID: 7728721766547317714, guid: 3be3af51d533e4332bd75c4482e29ac3,
     type: 3}
+  helicopter: {fileID: 7728721766547317714, guid: 43815a135d45e44508224d512b4fe89a,
+    type: 3}
+  helicopterProjectile: {fileID: 1210587634127288510, guid: caa8396d6667541c89df3fcff9c9b26d,
+    type: 3}
+  helicopterSpeed: 8
   dropHeight: 1
   gemSpeed: 7
   scoreSpeed: 5
