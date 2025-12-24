@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Lib.SimpleJSON;
 using TMPro;
 using UnityEngine;
@@ -11,7 +12,12 @@ public class ChatLogic : MonoBehaviour
     [SerializeField] private GirlSO girlSO;
     [SerializeField] private Image girlStageImage;
     [SerializeField] private TextMeshProUGUI chatText;
-   // [SerializeField] private ButtonPrefub chatText;
+    [SerializeField] private GameObject answersContainer;
+    [SerializeField] private Button buttonPrefub;
+
+    private Button buttonGood;
+    private Button buttonBad;
+    private Button buttonNeutral;
 
     class DateStage
     {
@@ -31,34 +37,80 @@ public class ChatLogic : MonoBehaviour
         DateStages = GetDataStage(activeDate);
     }
 
-    void Start()
+    async void Start()
     {
-        initStageView();
+        InstantiateAnswerButtons();
+        await initStageView();
     }
-    private void initStageView()
+    private async Task initStageView()
+    {  
+        ChangeButtonVisibility(false);
+        buttonGood.GetComponentInChildren<TextMeshProUGUI>().text = DateStages[activeStage].answer_good;
+        buttonBad.GetComponentInChildren<TextMeshProUGUI>().text = DateStages[activeStage].answer_bad;
+        buttonNeutral.GetComponentInChildren<TextMeshProUGUI>().text = DateStages[activeStage].answer_neutral;
+        
+        girlStageImage.sprite = girlSO.GirlGameStages[activeStage];
+        await WriteText();
+    }
+    private async Task WriteText()
     {
         chatText.text = DateStages[activeStage].girlTexts[0];
-        if (girlStageImage != null)
-            girlStageImage.sprite = girlSO.GirlGameStages[activeStage];
-
-        InstantiateAnswerButtons();
+        await Task.Delay(4000);
+        chatText.text = DateStages[activeStage].girlTexts[1];
+        await Task.Delay(4000);
+        chatText.text = DateStages[activeStage].question;
+        ChangeButtonVisibility(true);
     }
     private void InstantiateAnswerButtons()
     {
-        string goodAnswer = DateStages[activeStage].answer_good;
-        string badAnswer = DateStages[activeStage].answer_bad;
-        string neutralAnswer = DateStages[activeStage].answer_neutral;
-        //Instantiate();
+        buttonGood = Instantiate(buttonPrefub, answersContainer.transform) ;
+        buttonGood.onClick.AddListener(async() => await UpChangeStage());
+
+        buttonBad = Instantiate(buttonPrefub, answersContainer.transform);
+        buttonBad.onClick.AddListener(async() => await DownChangeStage());
+        
+        buttonNeutral = Instantiate(buttonPrefub, answersContainer.transform);
+        buttonNeutral.onClick.AddListener(async() => await RepeatStage());
+       
+        ChangeButtonVisibility(false);
     }
-    private void UpChangeStage()
+
+    private void ChangeButtonVisibility(bool visibility)
     {
-        activeStage++;
-        initStageView();
+        buttonGood.gameObject.SetActive(visibility);
+        buttonBad.gameObject.SetActive(visibility);
+        buttonNeutral.gameObject.SetActive(visibility);
     }
-    private void DownChangeStage()
+    private async Task UpChangeStage()
     {
-        activeStage--;
-        initStageView();
+        chatText.text = "Я дара это слышать";
+        await Task.Delay(2000);
+        if (activeStage < DateStages.Count)
+        {
+            activeStage++;
+            initStageView();
+        } else
+        {
+            Debug.Log("Все стадии пройдены!");
+        }
+        
+    }
+    private async Task RepeatStage()
+    {
+        girlStageImage.sprite = girlSO.GirlGameNeutral;
+        chatText.text = "Ты уверен в своем выборе? Попробуй еще раз!";
+        await Task.Delay(2000);
+        girlStageImage.sprite = girlSO.GirlGameStages[activeStage];
+        chatText.text = DateStages[activeStage].question;
+    }
+    private async Task DownChangeStage()
+    {
+        girlStageImage.sprite = girlSO.GirlGameFail;
+        chatText.text = "Мне не понравился твой ответ...";
+        await Task.Delay(2000);
+        if (activeStage > 0) activeStage--;
+        girlStageImage.sprite = girlSO.GirlGameStages[activeStage];
+        chatText.text = DateStages[activeStage].question;
     }
 
 

@@ -7,14 +7,16 @@ class GirlSO: ScriptableObject
 {
     [SerializeField] private string girlName;
     [SerializeField] private Sprite girlIcon;
-    [SerializeField] private Sprite girlGamelFail;
+    [SerializeField] private Sprite girlGameFail;
+    [SerializeField] private Sprite girlGameNeutral;
     [SerializeField] private List<Sprite> girlGameStages;
     [SerializeField] private List<Sprite> girlRewardStages;
     [SerializeField] private TextAsset girlChat;
 
     public string GirlName => girlName;
     public Sprite GirlIcon => girlIcon;
-    public Sprite GirlGamelFail => girlGamelFail;
+    public Sprite GirlGameFail => girlGameFail;
+    public Sprite GirlGameNeutral => girlGameNeutral;
     public List<Sprite>  GirlGameStages => girlGameStages;
     public List<Sprite>  GirlRewardStages => girlRewardStages;
     public TextAsset  GirlChat => girlChat;

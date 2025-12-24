@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   girlName: Eve
   girlIcon: {fileID: 21300000, guid: c2d4ef796805841e28011de499478cf7, type: 3}
-  girlGamelFail: {fileID: 21300000, guid: c4622b9198b0d49b590279af6c714123, type: 3}
+  girlGameFail: {fileID: 21300000, guid: c4622b9198b0d49b590279af6c714123, type: 3}
+  girlGameNeutral: {fileID: 21300000, guid: 3d2324cab9a5c4575b39a64776659a95, type: 3}
   girlGameStages:
   - {fileID: 21300000, guid: ad79d0ac5569b4c8b8889b9b2d1c57fa, type: 3}
-  - {fileID: 21300000, guid: 3d2324cab9a5c4575b39a64776659a95, type: 3}
   - {fileID: 21300000, guid: e14413631880d4559b8088d7d56be5e5, type: 3}
   - {fileID: 21300000, guid: 22f21906bc8234824a2cce4c56e9121b, type: 3}
   - {fileID: 21300000, guid: 1245e0fa874e84788a9495aa72336b9a, type: 3}
