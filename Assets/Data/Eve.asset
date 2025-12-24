@@ -13,7 +13,29 @@ MonoBehaviour:
   m_Name: Eve
   m_EditorClassIdentifier: 
   girlName: Eve
-  girlIcon: {fileID: 0}
-  girlGamelFail: {fileID: 0}
-  girlGameStages: []
-  girlRewardStages: []
+  girlIcon: {fileID: 21300000, guid: c2d4ef796805841e28011de499478cf7, type: 3}
+  girlGamelFail: {fileID: 21300000, guid: c4622b9198b0d49b590279af6c714123, type: 3}
+  girlGameStages:
+  - {fileID: 21300000, guid: ad79d0ac5569b4c8b8889b9b2d1c57fa, type: 3}
+  - {fileID: 21300000, guid: 3d2324cab9a5c4575b39a64776659a95, type: 3}
+  - {fileID: 21300000, guid: e14413631880d4559b8088d7d56be5e5, type: 3}
+  - {fileID: 21300000, guid: 22f21906bc8234824a2cce4c56e9121b, type: 3}
+  - {fileID: 21300000, guid: 1245e0fa874e84788a9495aa72336b9a, type: 3}
+  - {fileID: 21300000, guid: d290fb6b291014f1088a20de8c7886f0, type: 3}
+  - {fileID: 21300000, guid: d62ad4e7699ce4d608d38c35229b83d1, type: 3}
+  - {fileID: 21300000, guid: 224726d7412ec40ea8324b23e6c008c4, type: 3}
+  - {fileID: 21300000, guid: d8a4adcab10ea4e1ea3aab7dbb2084dc, type: 3}
+  - {fileID: 21300000, guid: 8606074de226f4e81a1cfa3861b38a39, type: 3}
+  - {fileID: 21300000, guid: 882aec30e750e4dc493a4e1b23519a2b, type: 3}
+  girlRewardStages:
+  - {fileID: 21300000, guid: b005b4635846645828a19d9a5092a9b3, type: 3}
+  - {fileID: 21300000, guid: 311a8abb02287402f9a6a88dd76f70e8, type: 3}
+  - {fileID: 21300000, guid: d133576b7237742a5805ee934aac111e, type: 3}
+  - {fileID: 21300000, guid: 4ca781f17df3345a18a425930b167fa3, type: 3}
+  - {fileID: 21300000, guid: c6a535d11109a4ce0802324109c90b01, type: 3}
+  - {fileID: 21300000, guid: 6d3e3b156b72c4587858acc44c74e138, type: 3}
+  - {fileID: 21300000, guid: 8b46f382438fd493293cc3144ea8171a, type: 3}
+  - {fileID: 21300000, guid: 142d960d577f34594b59d0a9cb522004, type: 3}
+  - {fileID: 21300000, guid: 2485978c331e74826b82f26ed514ca87, type: 3}
+  - {fileID: 21300000, guid: 74de92c9d0a984a6c97157cd239ac142, type: 3}
+  girlChat: {fileID: 4900000, guid: 1a6f6dee7f02348f7a3fcc1cbb7cb24d, type: 3}
