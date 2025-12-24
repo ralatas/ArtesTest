@@ -54,10 +54,11 @@ public class SC_GemPool : MonoBehaviour
             gem.prefabReference = prefab;
 
         // Basic setup
-        gem.transform.SetParent(parent);
+        gem.transform.SetParent(parent, worldPositionStays: false);
         gem.name = $"Gem - {boardPos.x}, {boardPos.y}";
         gem.posIndex = boardPos;
-        gem.transform.position = new Vector3(
+
+        gem.transform.localPosition = new Vector3(
             boardPos.x,
             boardPos.y + SC_GameVariables.Instance.dropHeight,
             0f

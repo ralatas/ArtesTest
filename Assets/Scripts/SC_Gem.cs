@@ -38,18 +38,20 @@ public class SC_Gem : MonoBehaviour
 
     private void Update()
     {
+        Vector3 targetLocalPos = new Vector3(posIndex.x, posIndex.y, transform.localPosition.z);
+
         // Smooth movement towards logical board position
-        if (Vector2.Distance(transform.position, posIndex) > 0.01f)
+        if (Vector3.Distance(transform.localPosition, targetLocalPos) > 0.01f)
         {
-            transform.position = Vector2.MoveTowards(
-                transform.position,
-                posIndex,
+            transform.localPosition = Vector3.MoveTowards(
+                transform.localPosition,
+                targetLocalPos,
                 SC_GameVariables.Instance.gemSpeed * Time.deltaTime
             );
         }
         else
         {
-            transform.position = new Vector3(posIndex.x, posIndex.y, 0);
+            transform.localPosition = targetLocalPos;
             scGameLogic.Board.SetGem(posIndex.x, posIndex.y, this);
         }
 

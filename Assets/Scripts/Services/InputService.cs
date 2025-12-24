@@ -119,8 +119,16 @@ public class InputService : IInputService
     {
         yield return new WaitForSeconds(.5f);
         // Wait until both swapped gems finish moving to their new board positions.
-        bool IsSettled(SC_Gem g) =>
-            g == null || Vector2.Distance(g.transform.position, g.posIndex) <= 0.01f;
+        bool IsSettled(SC_Gem g)
+        {
+            if (g == null)
+                return true;
+
+            Transform t = g.transform;
+            Vector3 targetLocal = new Vector3(g.posIndex.x, g.posIndex.y, t.localPosition.z);
+
+            return Vector3.Distance(t.localPosition, targetLocal) <= 0.01f;
+        }
 
         while (!IsSettled(gem) || !IsSettled(otherGem))
             yield return null;

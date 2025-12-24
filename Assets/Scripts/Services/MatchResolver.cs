@@ -81,7 +81,15 @@ public class MatchResolver : IMatchResolver
             return;
 
         ScoreCheck(curGem);
-        Object.Instantiate(curGem.destroyEffect, new Vector2(pos.x, pos.y), Quaternion.identity);
+        Transform parent = gameLogic != null ? gameLogic.GemsHolder : null;
+        Vector3 localPos = new Vector3(pos.x, pos.y, 0f);
+
+        if (curGem.destroyEffect != null)
+        {
+            GameObject effect = Object.Instantiate(curGem.destroyEffect, parent);
+            effect.transform.localPosition = localPos;
+            effect.transform.localRotation = Quaternion.identity;
+        }
         gameBoard.SetGem(pos.x, pos.y, null);
 
         if (SC_GemPool.Instance != null)

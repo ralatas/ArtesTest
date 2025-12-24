@@ -21,14 +21,14 @@ public class GemSpawnService : IGemSpawnService
         }
         else
         {
-            gemInstance = Object.Instantiate(
-                prefab,
-                new Vector3(position.x, position.y + SC_GameVariables.Instance.dropHeight, 0f),
-                Quaternion.identity
-            );
-            gemInstance.transform.SetParent(parent);
+            gemInstance = Object.Instantiate(prefab, Vector3.zero, Quaternion.identity);
+            gemInstance.transform.SetParent(parent, worldPositionStays: false);
             gemInstance.name = $"Gem - {position.x}, {position.y}";
             gemInstance.prefabReference = prefab;
+            gemInstance.transform.localPosition = ToLocalWithParentScale(
+                new Vector2(position.x, position.y + SC_GameVariables.Instance.dropHeight),
+                parent
+            );
             gemInstance.SetupGem(owner, position);
         }
 
@@ -63,8 +63,9 @@ public class GemSpawnService : IGemSpawnService
             for (int y = 0; y < gameBoard.Height; y++)
             {
                 Vector2 pos = new Vector2(x, y);
-                GameObject bgTile = Object.Instantiate(SC_GameVariables.Instance.bgTilePrefabs, pos, Quaternion.identity);
-                bgTile.transform.SetParent(holder);
+                GameObject bgTile = Object.Instantiate(SC_GameVariables.Instance.bgTilePrefabs, Vector3.zero, Quaternion.identity);
+                bgTile.transform.SetParent(holder, worldPositionStays: false);
+                bgTile.transform.localPosition = ToLocalWithParentScale(pos, holder);
                 bgTile.name = $"BG Tile - {x}, {y}";
 
                 Vector2Int gridPos = new Vector2Int(x, y);
@@ -105,5 +106,10 @@ public class GemSpawnService : IGemSpawnService
         }
 
         // No inner sprite cleanup needed; bombs now rely solely on their main sprite.
+    }
+
+    private Vector3 ToLocalWithParentScale(Vector2 boardPos, Transform parent, float z = 0f)
+    {
+        return new Vector3(boardPos.x, boardPos.y, z);
     }
 }
