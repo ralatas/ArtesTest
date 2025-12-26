@@ -88,7 +88,7 @@ public class ChatLogic : MonoBehaviour
         if (activeStage < DateStages.Count)
         {
             activeStage++;
-            initStageView();
+            await initStageView();
         } else
         {
             Debug.Log("Все стадии пройдены!");
