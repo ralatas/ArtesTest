@@ -1,4 +1,4 @@
-# Match-3 Technical Test — Refactored Architecture Overview
+# Match-3 
 
 This document describes the refactored architecture and the implemented features of the Match‑3 technical test.  
 The goal was not only to meet the assignment requirements, but also to reorganize the project into a cleaner, more maintainable structure that feels closer to real production code.
